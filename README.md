@@ -1,6 +1,6 @@
-# MacOS Alt-Tab mimic <!-- omit in toc -->
+# macOS Alt-Tab mimic <!-- omit in toc -->
 
-Windows promotes _multitasking distraction_ by putting all windows on the same Alt-Tab list. Conversely, MacOS only lets you to change application. With this application you will be able to overcome Windows distraction by mimicking MacOS Alt-Tab behaviour on Windows.
+Windows promotes _multitasking distraction_ by putting all windows on the same Alt-Tab list. Conversely, macOS only lets you to change application. With this application you will be able to overcome Windows distraction by mimicking macOS Alt-Tab behaviour on Windows.
 
 - [Demo](#demo)
 - [Key Shortcuts](#key-shortcuts)
