@@ -16,7 +16,7 @@ Press Alt+Tab to change between applications. Windows+Tab to change between wind
 | Hotkey                         | Action                                     |
 | ------------------------------ | ------------------------------------------ |
 | `Alt+Tab` or `2xCapslock`      | Change application.                        |
-| `Alt+Tab+Shift`                | Change application in reverse order.       |
+| `Alt+Shift+Tab`                | Change application in reverse order.       |
 | `Win+Tab` or `1xCapslock`      | Change window inside aplication.           |
 | `Alt+Capslock` or `3xCapslock` | Change desktop.                            |
 | `Esc` while AltTabbing         | Close all windows of selected application. |
