@@ -33,7 +33,6 @@ mainDesktop:=!mainDesktop
 switchToDesktop(mainDesktop+1)
 return
 
-+!Tab::
 !Tab::
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
@@ -62,13 +61,15 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 {
 	if (GetKeyState("Tab", "P") || count=0)
 	{
-		i:=Mod(count,IdListCount)+1
 		WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
-		count:=count+1
-		i:=Mod(count,IdListCount)+1
+		shiftPressed := GetKeyState("Shift")
+		count:=count+1-2*shiftPressed
+		if(count<0)
+			count:=IdList._MaxIndex()
+		i:=Abs(Mod(count,IdListCount))+1
 		myIcon:=myIcon%i%
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
-		prevWindowId:=IdList[Mod(count,IdListCount)+1]
+		prevWindowId:=IdList[i]
 		KeyWait Tab
 	}
 	if GetKeyState("Esc", "P")
