@@ -94,7 +94,12 @@ Loop 5
 }
 return
 
+RemoveToolTip:
+ToolTip
+return
+
 #Tab::
+CoordMode, Tooltip, Screen
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
 IdList:=WinsGetWindows(exename,0)
@@ -121,11 +126,21 @@ count := 0
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
-			count:=count+1
 			if(prevWindowId)
 				WinSet, AlwaysOnTop, Off, % "ahk_id " . prevWindowId
-			prevWindowId:=IdList[Mod(count,IdListCount)+1]
+			shiftPressed := GetKeyState("Shift")
+			count:=count+1-2*shiftPressed
+			if(count<0)
+				count:=IdList._MaxIndex()
+			i:=Abs(Mod(count,IdListCount))+1
+			prevWindowId:=IdList[i]
 			WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
+			WinGetTitle, Title, % "ahk_id " . prevWindowId
+			WinGetPos, X, Y, Width, Height, % "ahk_id " . prevWindowId
+			position:= "" . i . "/" .  IdList._MaxIndex()
+			CalculateToolTipDisplayRight(position)
+			ToolTip, % position, % X+Width-tW-10 , %Y%
+			SetTimer, RemoveToolTip, -5000
 			WinGet MX, MinMax, % "ahk_id " . prevWindowId
 			If (MX==-1)
 				WinRestore, % "ahk_id " . prevWindowId
@@ -133,6 +148,7 @@ count := 0
 			; WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[Mod(count,IdListCount)+1]
 		}
 	}
+	GoSub, RemoveToolTip
 	Loop % IdListCount {
 		WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
 	}
@@ -150,6 +166,17 @@ count := 0
 			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
 	}
 return
+
+CalculateToolTipDisplayRight(CData) {
+	global tW
+	global tH
+	CoordMode, ToolTip, Screen
+	ToolTip, %CData%,,A_ScreenHeight+100
+	thisId:=WinExist()
+	WinGetPos,,, tW, tH, ahk_class tooltips_class32 ahk_exe %A_ScriptName%
+	ToolTip
+	Return
+}
 
 CapsLock::
 KeyWait CapsLock
