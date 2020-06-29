@@ -123,6 +123,7 @@ ToolTip
 return
 
 #Tab::
+GoSub, CloseStartMenu
 CoordMode, Tooltip, Screen
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
