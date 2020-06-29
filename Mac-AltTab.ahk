@@ -33,7 +33,25 @@ mainDesktop:=!mainDesktop
 switchToDesktop(mainDesktop+1)
 return
 
+CloseStartMenu:
+WinClose ahk_class Windows.UI.Core.CoreWindow ahk_exe SearchUI.exe
+WinClose ahk_class Windows.UI.Core.CoreWindow ahk_exe StartMenuExperienceHost.exe
+Process Close, StartMenuExperienceHost.exe
+return
+
+#If StartMenuVisible()
+Esc::
+GoSub, CloseStartMenu
+return
+#If
+
+StartMenuVisible(){
+WinGet name, ProcessName, A
+return InStr(name, "SearchUI.exe")
+}
+
 !Tab::
+GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
 IdList:=WinsGetProcesses(0)
@@ -72,7 +90,12 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		prevWindowId:=IdList[i]
 		KeyWait Tab
 	}
-	if GetKeyState("Esc", "P")
+	if (GetKeyState("Esc"))
+	{
+		prevWindowId:=""
+		break
+	}
+	if GetKeyState("F1", "P")
 	{
 		WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
 		Gui, 2: -AlwaysOnTop
@@ -87,11 +110,12 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 	}
 }
 Gui, 2:  Destroy
-Loop 5
-{
-	WinActivate, % "ahk_id " . prevWindowId
-	Sleep, 10
-}
+if(prevWindowId!="")
+	Loop, % 5
+	{
+		WinActivate, % "ahk_id " . prevWindowId
+		Sleep, 10
+	}
 return
 
 RemoveToolTip:
@@ -154,7 +178,7 @@ count := 0
 	}
 	WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
 	WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
-	Loop 3{
+	Loop % 3 {
 		WinActivate, % "ahk_id " . active_id
 		WinActivate, % "ahk_id " . prevWindowId
 		Sleep, 50
