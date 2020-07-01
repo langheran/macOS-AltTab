@@ -4,6 +4,7 @@
 #MaxHotkeysPerInterval 800
 #KeyHistory 0
 #InstallKeybdHook
+#WinActivateForce
 
 #Include RunAsTask.ahk
 RunAsTask()
@@ -179,10 +180,10 @@ count := 0
 	}
 	WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
 	WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
-	Loop % 3 {
+	SetWinDelay, -1
+	Loop % 2 {
 		WinActivate, % "ahk_id " . active_id
 		WinActivate, % "ahk_id " . prevWindowId
-		Sleep, 50
 	}
 	Loop % IdListCount {
 		if(AlwaysOnTopArray[A_Index]==1)
