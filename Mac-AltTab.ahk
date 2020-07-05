@@ -127,6 +127,8 @@ RemoveToolTip:
 ToolTip
 return
 
+#BS::
+WinGet, close_exename, ProcessName, A
 CloseExeByName:
 IdList:=WinsGetWindows(close_exename,0)
 Loop, % IdList._MaxIndex(){
@@ -142,7 +144,6 @@ Loop, % IdList._MaxIndex(){
 return
 
 #Tab::
-Hotkey, #BS, RemoveToolTip, On
 GoSub, CloseStartMenu
 CoordMode, Tooltip, Screen
 WinGet, exename, ProcessName,A
@@ -242,7 +243,6 @@ IdList:=WinsGetWindows(exename,0)
 			GoSub, CloseExeByName
 		}
 	}
-Hotkey, #BS, RemoveToolTip, Off
 return
 
 CalculateToolTipDisplayRight(CData) {
