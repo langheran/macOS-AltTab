@@ -97,7 +97,7 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		prevWindowId:=""
 		break
 	}
-	if GetKeyState("F1", "P")
+	if GetKeyState("BS", "P")
 	{
 		WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
 		Gui, 2: -AlwaysOnTop
@@ -106,8 +106,18 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		{
 			IdList:=WinsGetWindows(close_exename,0)
 			Loop, % IdList._MaxIndex(){
-				WinClose, % "ahk_id " . IdList[A_Index]
+				close_id := IdList[A_Index]
+				WinActivate, % "ahk_id " . close_id
+				WinGetTitle, close_title, % "ahk_id " . close_id
+				MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
+				IfMsgBox, Yes
+				{
+					WinClose, % "ahk_id " . close_id
+				}
 			}
+		} else {
+			prevWindowId:=""
+			break
 		}
 	}
 }
