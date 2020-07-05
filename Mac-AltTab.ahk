@@ -1,4 +1,3 @@
-
 #NoEnv
 #HotkeyInterval 1000
 #MaxHotkeysPerInterval 800
@@ -104,17 +103,7 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
 		IfMsgBox, Yes
 		{
-			IdList:=WinsGetWindows(close_exename,0)
-			Loop, % IdList._MaxIndex(){
-				close_id := IdList[A_Index]
-				WinActivate, % "ahk_id " . close_id
-				WinGetTitle, close_title, % "ahk_id " . close_id
-				MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
-				IfMsgBox, Yes
-				{
-					WinClose, % "ahk_id " . close_id
-				}
-			}
+			GoSub, CloseExeByName
 		} else {
 			prevWindowId:=""
 			break
@@ -136,7 +125,22 @@ RemoveToolTip:
 ToolTip
 return
 
+CloseExeByName:
+IdList:=WinsGetWindows(close_exename,0)
+Loop, % IdList._MaxIndex(){
+	close_id := IdList[A_Index]
+	WinActivate, % "ahk_id " . close_id
+	WinGetTitle, close_title, % "ahk_id " . close_id
+	MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
+	IfMsgBox, Yes
+	{
+		WinClose, % "ahk_id " . close_id
+	}
+}
+return
+
 #Tab::
+Hotkey, #BS, RemoveToolTip, On
 GoSub, CloseStartMenu
 CoordMode, Tooltip, Screen
 WinGet, exename, ProcessName,A
@@ -161,7 +165,8 @@ count := 0
 		WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
 	}
 	prevWindowId:=0
-	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
+	close_exename:=""
+	While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !close_exename)
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
@@ -186,6 +191,10 @@ count := 0
 			KeyWait Tab
 			; WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[Mod(count,IdListCount)+1]
 		}
+		if GetKeyState("Backspace", "P")
+		{
+			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
+		}
 	}
 	GoSub, RemoveToolTip
 	Loop % IdListCount {
@@ -204,6 +213,15 @@ count := 0
 		else
 			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
 	}
+	if(close_exename)
+	{
+		MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
+		IfMsgBox, Yes
+		{
+			GoSub, CloseExeByName
+		}
+	}
+Hotkey, #BS, RemoveToolTip, Off
 return
 
 CalculateToolTipDisplayRight(CData) {
