@@ -76,6 +76,7 @@ Loop % IdListCount{
 }
 Gui, 2:  Show
 count:=0
+prevWindowId:=""
 While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 {
 	if (GetKeyState("Tab", "P") || count=0)
@@ -110,13 +111,15 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		}
 	}
 }
-Gui, 2:  Destroy
 if(prevWindowId!="")
+{
 	Loop, % 5
 	{
 		WinActivate, % "ahk_id " . prevWindowId
 		Sleep, 10
 	}
+}
+Gui, 2:  Destroy
 return
 
 RemoveToolTip:

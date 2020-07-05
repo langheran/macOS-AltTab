@@ -1,0 +1,5 @@
+# TODO
+- Lock visible screens in a group to activate all when activate one of them
+- F1 Close one by one message box
+- temporal F1 key sink 
+- Esc return to original window in #Tab
