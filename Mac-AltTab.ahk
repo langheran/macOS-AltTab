@@ -57,7 +57,8 @@ WinGet, active_id, ID, A
 IdList:=WinsGetProcesses(0)
 IdListCount:=IdList._MaxIndex()
 WS_BORDER := 0x00800000
-Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption
+Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
+guid_id:=WinExist()
 Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
 	winget, winpid, PID, % "ahk_id " IdList[A_Index]
@@ -110,6 +111,7 @@ While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 		}
 	}
 }
+WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
 if(prevWindowId!="")
 {
 	Loop, % 5
