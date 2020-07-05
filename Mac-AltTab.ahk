@@ -146,10 +146,8 @@ CoordMode, Tooltip, Screen
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
 IdList:=WinsGetWindows(exename,0)
-count:=0
-count := 0
+	count:=0
 	IdListCount:=IdList._MaxIndex()
-	WinGet, active_id, ID, A
 	AlwaysOnTopArray:=[]
 	
 	Loop % IdListCount {
@@ -166,7 +164,7 @@ count := 0
 	}
 	prevWindowId:=0
 	close_exename:=""
-	While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !close_exename)
+	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
@@ -194,24 +192,45 @@ count := 0
 		if GetKeyState("Backspace", "P")
 		{
 			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
+			break
+		}
+		if (GetKeyState("Esc"))
+		{
+			prevWindowId:=""
+			break
 		}
 	}
 	GoSub, RemoveToolTip
-	Loop % IdListCount {
-		WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
-	}
-	WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
-	WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
-	SetWinDelay, -1
-	Loop % 2 {
-		WinActivate, % "ahk_id " . active_id
-		WinActivate, % "ahk_id " . prevWindowId
+	if(prevWindowId)
+	{
+		Loop % IdListCount {
+			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
+		}
+		WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
+		WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
+		SetWinDelay, -1
+		Loop % 2 {
+			WinActivate, % "ahk_id " . active_id
+			WinActivate, % "ahk_id " . prevWindowId
+		}
 	}
 	Loop % IdListCount {
 		if(AlwaysOnTopArray[A_Index]==1)
 			WinSet, AlwaysOnTop, On, % "ahk_id " . IdList[A_Index]
 		else
 			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
+	}
+	if(!prevWindowId)
+	{
+		WinGetPos, X, Y, Width, Height, % "ahk_id " . active_id
+		position:="Activate"
+		CalculateToolTipDisplayRight(position)
+		ToolTip, % position, % X+Width-tW-10 , %Y%
+		Loop % 4 {
+			WinActivate, % "ahk_id " . active_id
+			WinActivate, ahk_class tooltips_class32 ahk_exe %A_ScriptName%
+		}
+		GoSub, RemoveToolTip
 	}
 	if(close_exename)
 	{
