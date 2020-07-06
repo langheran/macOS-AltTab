@@ -347,7 +347,18 @@ else
 			MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
 			IfMsgBox, Yes
 			{
-				GoSub, CloseExeByName
+				Loop, % IdList._MaxIndex(){
+					i:=Abs(Mod(count,IdListCount))+1
+					close_id := IdList[i]
+					WinActivate, % "ahk_id " . close_id
+					WinGetTitle, close_title, % "ahk_id " . close_id
+					MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
+					IfMsgBox, Yes
+					{
+						WinClose, % "ahk_id " . close_id
+					}
+					count:=count+1
+				}
 			} else {
 				prevWindowId:=""
 				break
