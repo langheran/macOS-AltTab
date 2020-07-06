@@ -303,7 +303,7 @@ else
 		if(i==1)
 			sep:=0
 		Gui 2:Add, Picture, % "x+" . sep . " y20 w230 h230 hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp y20 w230 h230 BackgroundTrans hwndThumbIcon" . i . " +0xE"
+		Gui 2:Add, Picture, % "xp y203 w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE"
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
