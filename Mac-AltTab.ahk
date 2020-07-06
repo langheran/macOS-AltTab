@@ -12,7 +12,7 @@ wsNoBorder:={}
 wsIcon:={}
 lastWS:={}
 OnExit Exit
-SetTimer, RefreshWS, 2000
+SetTimer, RefreshWS, 5000
 
 #Include RunAsTask.ahk
 RunAsTask()
