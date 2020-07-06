@@ -11,6 +11,10 @@ Press Alt+Tab to change between applications. Windows+Tab to change between wind
 
 ![image](./images/demo.gif)
 
+Press Windows+Tab to change between windows inside the selected application.
+
+![image](./images/demo2.gif)
+
 ## Key Shortcuts
 
 | Hotkey                         | Action                                     |
