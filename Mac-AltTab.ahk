@@ -320,7 +320,7 @@ else
 		if (GetKeyState("Tab", "P") || count=0)
 		{
 			SetImage(myIcon, getWsNoBorder(prevWindowId))
-			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+			; WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
 
 			shiftPressed := GetKeyState("Shift")
@@ -333,7 +333,7 @@ else
 			ThumbIcon:=ThumbIcon%i%
 
 			SetImage(myIcon, getWsBorder(IdList[i]))
-			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+			; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
 
 			prevWindowId:=IdList[i]
@@ -565,8 +565,8 @@ Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth,
 pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
-Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center cffffffff"
-Font := "Arial"
+Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
+Font := "SF Pro Display"
 Gdip_TextToGraphics(GB, Title, Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapWB)
 
@@ -581,8 +581,8 @@ Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, 
 pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
-Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center cbbffffff"
-Font := "Arial"
+Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cbbffffff"
+Font := "SF Pro Display"
 Gdip_TextToGraphics(G, Title, Options, Font, DstWidth-Bord, 30)
 
 hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
