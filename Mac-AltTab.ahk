@@ -541,6 +541,7 @@ global wsIcon
 global lastWS
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
+Title:=limittext(Title)
 
 lastWS[SourceWin]:=A_TickCount
 
@@ -561,10 +562,10 @@ pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
-pBrush := Gdip_BrushCreateSolid(0xbb721CAA)
+pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
-Options := "x64 y200 h30 w200 s20 Bottom cffffffff"
+Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center cffffffff"
 Font := "Arial"
 Gdip_TextToGraphics(GB, Title, Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapWB)
@@ -573,14 +574,14 @@ wsBorder[SourceWin]:=hBitmapB
 
 pBitmapW := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 G := Gdip_GraphicsFromImage(pBitmapW)
-pBrush := Gdip_BrushCreateSolid(0x00ffffff)
+pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
-pBrush := Gdip_BrushCreateSolid(0xbb333333)
+pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
-Options := "x64 y200 h30 w200 s20 Bottom cbbffffff"
+Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center cbbffffff"
 Font := "Arial"
 Gdip_TextToGraphics(G, Title, Options, Font, DstWidth-Bord, 30)
 
@@ -599,6 +600,20 @@ Gdip_DisposeImage(pBitmapI)
 if pBitmap=0
 	return false
 return true
+}
+
+limittext(s,words=5,len=25)
+{
+  r := ""
+  loop,parse,s,`t` ,
+  {
+    if (StrLen(r . " " . A_LoopField) > len)
+      break
+    r .= " " A_LoopField
+    if (A_Index = words)
+      break
+  }
+  return r
 }
 
 getWsBorder(sourceWin){
