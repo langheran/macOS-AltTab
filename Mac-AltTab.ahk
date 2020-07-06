@@ -553,7 +553,7 @@ wsIcon[SourceWin]:=hBitmapI
 pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
 pBitmapWB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 GB := Gdip_GraphicsFromImage(pBitmapWB)
-pBrush := Gdip_BrushCreateSolid(0x800000ff)
+pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
