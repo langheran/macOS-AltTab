@@ -279,18 +279,20 @@ else
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
 	IdListCount:=IdList._MaxIndex()
-	; KeyWait LWin, U T0.2
-	; if (ErrorLevel = 0 || 
-	If(IdListCount<3)
-	{
-		prevWindowId:=IdList[2]
-		Loop, % 5
-		{
-			WinActivate, % "ahk_id " . prevWindowId
-			Sleep, 10
-		}
-		return
-	}
+	; If(IdListCount<3)
+	; {
+	; 	KeyWait LWin, U T0.2
+	; 	if (ErrorLevel = 0)
+	; 	{
+	; 		prevWindowId:=IdList[2]
+	; 		Loop, % 5
+	; 		{
+	; 			WinActivate, % "ahk_id " . prevWindowId
+	; 			Sleep, 10
+	; 		}
+	; 		return
+	; 	}
+	; }
 	WS_BORDER := 0x00800000
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
 	guid_id:=WinExist()
@@ -575,7 +577,6 @@ Gdip_DeleteGraphics(GB)
 Gdip_DisposeImage(pBitmap)
 Gdip_DisposeImage(pBitmapB)
 
-DeleteObject(hBitmapI)
 Gdip_DisposeImage(pBitmapW)
 Gdip_DisposeImage(pBitmapI)
 if pBitmap=0
