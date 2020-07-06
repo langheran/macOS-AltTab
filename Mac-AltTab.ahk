@@ -530,7 +530,7 @@ WinIsVisible(ahk_id="A"){
 }
 
 ;###########################################################
-CopyWinImgToCtrl(SourceWin,DstWidth, DstHeight)
+CopyWinImgToCache(SourceWin,DstWidth, DstHeight)
 {
 global Bord
 global wsBorder
@@ -545,7 +545,7 @@ DstWidth:=DstWidth-Bord
 DstHeight:=DstHeight-Bord
 pBitmapI :=Gdip_CreateBitmapFromHICON(Get_Window_Icon(SourceWin))
 w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
-pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 32, 32, 0)
+pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 64, 64, 0)
 hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 
 wsIcon[SourceWin]:=hBitmapI
@@ -590,7 +590,7 @@ getWsBorder(sourceWin){
 
 	if(wsBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsBorder[sourceWin]
-	CopyWinImgToCtrl(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin,300, 300)
 	return wsBorder[sourceWin]
 }
 
@@ -600,7 +600,7 @@ getWsNoBorder(sourceWin){
 
 	if(wsNoBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsNoBorder[sourceWin]
-	CopyWinImgToCtrl(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin,300, 300)
 	return wsNoBorder[sourceWin]
 }
 
@@ -610,7 +610,7 @@ getWsIcon(sourceWin){
 
 	if(wsIcon.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsIcon[sourceWin]
-	CopyWinImgToCtrl(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin,300, 300)
 	return wsIcon[sourceWin]
 }
 
@@ -625,7 +625,7 @@ For Key, hBitmap in wsIcon{
 	}
 	else
 	{
-		CopyWinImgToCtrl(sourceWin,300, 300)
+		CopyWinImgToCache(sourceWin,300, 300)
 	}
 }
 return
