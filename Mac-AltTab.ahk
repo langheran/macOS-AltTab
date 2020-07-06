@@ -149,7 +149,7 @@ RemoveToolTip:
 ToolTip
 return
 
-#IfWinNotActive, ahk_exe Mac-AltTab.exe
+#IfWinNotExist, ahk_exe Mac-AltTab.exe
 #BS::
 WinGet, close_exename, ProcessName, A
 CloseExeByName:
