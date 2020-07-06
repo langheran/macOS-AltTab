@@ -9,7 +9,10 @@
 pToken := Gdip_Startup()
 wsBorder:={}
 wsNoBorder:={}
+wsIcon:={}
+lastWS:={}
 OnExit Exit
+SetTimer, RefreshWS, 2000
 
 #Include RunAsTask.ahk
 RunAsTask()
@@ -33,6 +36,15 @@ SendMode Input
 return
 
 Exit:
+For Key, hBitmap in wsBorder{
+	DeleteObject(hBitmap)
+}
+For Key, hBitmap in wsNoBorder{
+	DeleteObject(hBitmap)
+}
+For Key, hBitmap in wsIcon{
+	DeleteObject(hBitmap)
+}
 Gdip_Shutdown(pToken)
 ExitApp
 
@@ -266,9 +278,19 @@ else
 	WinGet, active_id, ID, A
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
-	iconsHwnds:={}
-	screenshotsHwnds:={}
 	IdListCount:=IdList._MaxIndex()
+	; KeyWait LWin, U T0.2
+	; if (ErrorLevel = 0 || 
+	If(IdListCount<3)
+	{
+		prevWindowId:=IdList[2]
+		Loop, % 5
+		{
+			WinActivate, % "ahk_id " . prevWindowId
+			Sleep, 10
+		}
+		return
+	}
 	WS_BORDER := 0x00800000
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
 	guid_id:=WinExist()
@@ -283,7 +305,8 @@ else
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
-		CopyWinImgToCtrl(sourceWin,300, 300,image,icon)
+		SetImage(image, getWsNoBorder(sourceWin))
+		SetImage(icon, getWsIcon(sourceWin))
 	}
 	Gui, 2:  Show
 	count:=0
@@ -292,7 +315,7 @@ else
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
-			SetImage(myIcon, wsNoBorder[prevWindowId])
+			SetImage(myIcon, getWsNoBorder(prevWindowId))
 			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
 
@@ -305,7 +328,7 @@ else
 			myIconBorder:=myIconBorder%i%
 			ThumbIcon:=ThumbIcon%i%
 
-			SetImage(myIcon, wsBorder[IdList[i]])
+			SetImage(myIcon, getWsBorder(IdList[i]))
 			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
 
@@ -330,12 +353,6 @@ else
 				break
 			}
 		}
-	}
-	For Key, hBitmap in wsBorder{
-		DeleteObject(hBitmap)
-	}
-	For Key, hBitmap in wsNoBorder{
-		DeleteObject(hBitmap)
 	}
 	WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
 	if(prevWindowId!="")
@@ -500,11 +517,15 @@ WinIsVisible(ahk_id="A"){
 }
 
 ;###########################################################
-CopyWinImgToCtrl(SourceWin,DstWidth, DstHeight,TargetContol,TargIc)
+CopyWinImgToCtrl(SourceWin,DstWidth, DstHeight)
 {
 global Bord
 global wsBorder
 global wsNoBorder
+global wsIcon
+global lastWS
+
+lastWS[SourceWin]:=A_TickCount
 
 Bord:=10
 DstWidth:=DstWidth-Bord
@@ -513,8 +534,10 @@ pBitmapI :=Gdip_CreateBitmapFromHICON(Get_Window_Icon(SourceWin))
 w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
 pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 32, 32, 0)
 hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
-pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
 
+wsIcon[SourceWin]:=hBitmapI
+
+pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
 pBitmapWB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 GB := Gdip_GraphicsFromImage(pBitmapWB)
 pBrush := Gdip_BrushCreateSolid(0x800000ff)
@@ -535,13 +558,6 @@ hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
 
 wsNoBorder[SourceWin]:=hBitmap
 
-if (pBitmapB<>0)
-	SetImage(TargetContolB, hBitmapB)
-if (pBitmap<>0)
-	SetImage(TargetContol, hBitmap)
-if (pBitmapI<>0)
-	SetImage(TargIc, hBitmapI)
-
 Gdip_DeleteGraphics(G)
 Gdip_DeleteGraphics(GB)
 
@@ -555,6 +571,52 @@ if pBitmap=0
 	return false
 return true
 }
+
+getWsBorder(sourceWin){
+	global wsBorder
+	global lastWS
+
+	if(wsBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+		return wsBorder[sourceWin]
+	CopyWinImgToCtrl(sourceWin,300, 300)
+	return wsBorder[sourceWin]
+}
+
+getWsNoBorder(sourceWin){
+	global wsNoBorder
+	global lastWS
+
+	if(wsNoBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+		return wsNoBorder[sourceWin]
+	CopyWinImgToCtrl(sourceWin,300, 300)
+	return wsNoBorder[sourceWin]
+}
+
+getWsIcon(sourceWin){
+	global wsIcon
+	global lastWS
+
+	if(wsIcon.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+		return wsIcon[sourceWin]
+	CopyWinImgToCtrl(sourceWin,300, 300)
+	return wsIcon[sourceWin]
+}
+
+RefreshWS:
+if(WinExist("ahk_id " . guid_id))
+	return
+For Key, hBitmap in wsIcon{
+	if(!WinExist("ahk_id " . Key)){
+		wsIcon.Delete(Key)
+		wsNoBorder.Delete(Key)
+		wsBorder.Delete(Key)
+	}
+	else
+	{
+		CopyWinImgToCtrl(sourceWin,300, 300)
+	}
+}
+return
 
 Get_Window_Icon(wid, Use_Large_Icons_Current=1) ; (window id, whether to get large icons)
 {
