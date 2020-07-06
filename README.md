@@ -4,6 +4,7 @@ Windows promotes _multitasking distraction_ by putting all windows on the same A
 
 - [Demo](#demo)
 - [Key Shortcuts](#key-shortcuts)
+- [Disclaimer](#disclaimer)
 
 ## Demo
 
@@ -24,3 +25,7 @@ Press Windows+Tab to change between windows inside the selected application.
 | `Win+Tab` or `1xCapslock`      | Change window inside aplication.           |
 | `Alt+Capslock` or `3xCapslock` | Change desktop.                            |
 | `Esc` while AltTabbing         | Close all windows of selected application. |
+
+## Disclaimer
+
+- Mac Fonts can be downloaded in Windows by decompressing [SF Font](https://developer.apple.com/design/downloads/SF-Font-Pro.dmg) with 7Zip from [Apple's web site](https://developer.apple.com/fonts/).
