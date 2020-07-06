@@ -96,7 +96,7 @@ Loop % IdListCount{
 	myIcon:=myIcon%i%
 	SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 }
-Gui, 2:  Show
+Gui, 2:  Show, NoActivate 
 count:=0
 prevWindowId:=""
 While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
@@ -310,7 +310,7 @@ else
 		SetImage(image, getWsNoBorder(sourceWin))
 		SetImage(icon, getWsIcon(sourceWin))
 	}
-	Gui, 2:  Show
+	Gui, 2:  Show, NoActivate 
 	count:=0
 	prevWindowId:=""
 	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
