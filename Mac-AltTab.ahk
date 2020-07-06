@@ -5,6 +5,12 @@
 #InstallKeybdHook
 #WinActivateForce
 
+#Include, Gdip_All.ahk
+pToken := Gdip_Startup()
+wsBorder:={}
+wsNoBorder:={}
+OnExit Exit
+
 #Include RunAsTask.ahk
 RunAsTask()
 
@@ -25,6 +31,10 @@ SendMode Input
 #Include switchDesktop.ahk
 
 return
+
+Exit:
+Gdip_Shutdown(pToken)
+ExitApp
 
 !CapsLock::
 ^CapsLock::
@@ -127,6 +137,7 @@ RemoveToolTip:
 ToolTip
 return
 
+#IfWinNotActive, ahk_exe Mac-AltTab.exe
 #BS::
 WinGet, close_exename, ProcessName, A
 CloseExeByName:
@@ -142,13 +153,16 @@ Loop, % IdList._MaxIndex(){
 	}
 }
 return
+#If
 
 #Tab::
-GoSub, CloseStartMenu
-CoordMode, Tooltip, Screen
-WinGet, exename, ProcessName,A
-WinGet, active_id, ID, A
-IdList:=WinsGetWindows(exename,0)
+if(0)
+{
+	GoSub, CloseStartMenu
+	CoordMode, Tooltip, Screen
+	WinGet, exename, ProcessName,A
+	WinGet, active_id, ID, A
+	IdList:=WinsGetWindows(exename,0)
 	count:=0
 	IdListCount:=IdList._MaxIndex()
 	AlwaysOnTopArray:=[]
@@ -243,6 +257,97 @@ IdList:=WinsGetWindows(exename,0)
 			GoSub, CloseExeByName
 		}
 	}
+}
+else
+{
+	GoSub, CloseStartMenu
+	CoordMode, Tooltip, Screen
+	WinGet, exename, ProcessName,A
+	WinGet, active_id, ID, A
+	IdList:=WinsGetWindows(exename,0)
+	count:=0
+	iconsHwnds:={}
+	screenshotsHwnds:={}
+	IdListCount:=IdList._MaxIndex()
+	WS_BORDER := 0x00800000
+	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
+	guid_id:=WinExist()
+	Gui, 2:  Margin, 20, 20
+	Loop % IdListCount{
+		i:=A_Index
+		sep:=10
+		if(i==1)
+			sep:=0
+		Gui 2:Add, Picture, % "x+" . sep . " y20 w230 h230 hwndmyIcon" . i . " +0xE"
+		Gui 2:Add, Picture, % "xp y20 w230 h230 BackgroundTrans hwndThumbIcon" . i . " +0xE"
+		image := myIcon%i%
+		icon := ThumbIcon%i%
+		sourceWin:=IdList[A_Index]
+		CopyWinImgToCtrl(sourceWin,300, 300,image,icon)
+	}
+	Gui, 2:  Show
+	count:=0
+	prevWindowId:=""
+	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
+	{
+		if (GetKeyState("Tab", "P") || count=0)
+		{
+			SetImage(myIcon, wsNoBorder[prevWindowId])
+			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+			GuiControl, +Redraw,    % ThumbIcon
+
+			shiftPressed := GetKeyState("Shift")
+			count:=count+1-2*shiftPressed
+			if(count<0)
+				count:=IdList._MaxIndex()
+			i:=Abs(Mod(count,IdListCount))+1
+			myIcon:=myIcon%i%
+			myIconBorder:=myIconBorder%i%
+			ThumbIcon:=ThumbIcon%i%
+
+			SetImage(myIcon, wsBorder[IdList[i]])
+			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+			GuiControl, +Redraw,    % ThumbIcon
+
+			prevWindowId:=IdList[i]
+			KeyWait Tab
+		}
+		if (GetKeyState("Esc"))
+		{
+			prevWindowId:=""
+			break
+		}
+		if GetKeyState("BS", "P")
+		{
+			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
+			Gui, 2: -AlwaysOnTop
+			MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
+			IfMsgBox, Yes
+			{
+				GoSub, CloseExeByName
+			} else {
+				prevWindowId:=""
+				break
+			}
+		}
+	}
+	For Key, hBitmap in wsBorder{
+		DeleteObject(hBitmap)
+	}
+	For Key, hBitmap in wsNoBorder{
+		DeleteObject(hBitmap)
+	}
+	WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
+	if(prevWindowId!="")
+	{
+		Loop, % 5
+		{
+			WinActivate, % "ahk_id " . prevWindowId
+			Sleep, 10
+		}
+	}
+	Gui, 2:  Destroy
+}
 return
 
 CalculateToolTipDisplayRight(CData) {
@@ -392,4 +497,148 @@ WinIsVisible(ahk_id="A"){
 	WinGet, Active_Process, ProcessName, ahk_id %hWindow%
 	 WinGet, es, ExStyle, ahk_id %hWindow%
       return (Active_Process<>"spritz.exe") && (!((es & WS_EX_TOOLWINDOW) && !(es & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(hWindow))
+}
+
+;###########################################################
+CopyWinImgToCtrl(SourceWin,DstWidth, DstHeight,TargetContol,TargIc)
+{
+global Bord
+global wsBorder
+global wsNoBorder
+
+Bord:=10
+DstWidth:=DstWidth-Bord
+DstHeight:=DstHeight-Bord
+pBitmapI :=Gdip_CreateBitmapFromHICON(Get_Window_Icon(SourceWin))
+w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
+pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 32, 32, 0)
+hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
+pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
+
+pBitmapWB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
+GB := Gdip_GraphicsFromImage(pBitmapWB)
+pBrush := Gdip_BrushCreateSolid(0x800000ff)
+Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
+Gdip_DeleteBrush(pBrush)
+Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapWB)
+
+wsBorder[SourceWin]:=hBitmapB
+
+pBitmapW := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
+G := Gdip_GraphicsFromImage(pBitmapW)
+pBrush := Gdip_BrushCreateSolid(0x00ffffff)
+Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
+Gdip_DeleteBrush(pBrush)
+Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
+
+wsNoBorder[SourceWin]:=hBitmap
+
+if (pBitmapB<>0)
+	SetImage(TargetContolB, hBitmapB)
+if (pBitmap<>0)
+	SetImage(TargetContol, hBitmap)
+if (pBitmapI<>0)
+	SetImage(TargIc, hBitmapI)
+
+Gdip_DeleteGraphics(G)
+Gdip_DeleteGraphics(GB)
+
+Gdip_DisposeImage(pBitmap)
+Gdip_DisposeImage(pBitmapB)
+
+DeleteObject(hBitmapI)
+Gdip_DisposeImage(pBitmapW)
+Gdip_DisposeImage(pBitmapI)
+if pBitmap=0
+	return false
+return true
+}
+
+Get_Window_Icon(wid, Use_Large_Icons_Current=1) ; (window id, whether to get large icons)
+{
+
+
+  ; check status of window - if window is responding or "Not Responding"
+
+  h_icon:=0
+  Responding := DllCall("SendMessageTimeout", "UInt", wid, "UInt", 0x0, "Int", 0, "Int", 0, "UInt", 0x2, "UInt", 150, "UInt *", NR_temp) ; 150 = timeout in millisecs
+  If (Responding)
+    {
+    ; WM_GETICON values -    ICON_SMALL =0,   ICON_BIG =1,   ICON_SMALL2 =2
+    If Use_Large_Icons_Current =1
+      {
+      SendMessage, 0x7F, 1, 0,, ahk_id %wid%
+      h_icon := ErrorLevel
+      }
+    If ( ! h_icon )
+      {
+      SendMessage, 0x7F, 2, 0,, ahk_id %wid%
+      h_icon := ErrorLevel
+        If ( ! h_icon )
+          {
+          SendMessage, 0x7F, 0, 0,, ahk_id %wid%
+          h_icon := ErrorLevel
+          If ( ! h_icon )
+            {
+            If Use_Large_Icons_Current =1
+              h_icon := DllCall( "GetClassLong", "uint", wid, "int", -14 ) ; GCL_HICON is -14
+            If ( ! h_icon )
+              {
+              h_icon := DllCall( "GetClassLong", "uint", wid, "int", -34 ) ; GCL_HICONSM is -34
+              ;If ( ! h_icon )
+              ;  h_icon := DllCall( "LoadIcon", "uint", 0, "uint", 32512 ) ; IDI_APPLICATION is 32512
+              }
+            }
+          }
+        }
+      }
+return h_icon
+}
+
+Gdip_BitmapFromHWNDStretchToDst(SrcHwnd,DstWidth,DstHeight,Bord:=0)
+{
+
+WinGetPos,,, Width, Height, ahk_id %SrcHwnd%
+if (Width=0) or (Height=0)
+	{
+	return 0
+	}
+if (A_OSVersion in WIN_XP)  ; Note: No spaces around commas.
+	{
+	pBitmap := Gdip_BitmapFromHWND(SrcHwnd)
+	}
+else
+	{
+	if (SrcHwnd="")
+		{
+		SrcHwnd:=0
+		}
+	hdc2 := DllCall("GetDC", UInt, SrcHwnd)
+	hdc := DllCall("CreateCompatibleDC", "uint", hdc2)
+	hbm := DllCall("gdi32.dll\CreateCompatibleBitmap", UInt,hdc2 , Int,Width, Int,Height)
+	obm := DllCall( "gdi32.dll\SelectObject", UInt,hdc, UInt,hbm)
+	PrintWindow(SrcHwnd, hdc)
+	pBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+	sel_obj := SelectObject(hdc, obm)
+	DeleteObject(obm), 
+	DeleteObject(hbm), 
+	DeleteDC(hdc),
+	DeleteDC(hdc2),
+	DeleteObject(sel_obj)
+	}
+pBitmap := Gdip_ResizepBitmap(pBitmap, Width, Height, DstWidth, DstHeight,Bord)
+return pBitmap
+}
+
+Gdip_ResizepBitmap(pBitmap,SrcW,SrcH,DstW,DstH,Bord:=0)
+{
+	nwpBitmap := Gdip_CreateBitmap(DstW,DstH)
+	nwpGraphics := Gdip_GraphicsFromImage(nwpBitmap)
+	Gdip_DrawImage(nwpGraphics, pBitmap, 0, 0, DstW, DstH, Bord, Bord, SrcW, SrcH)
+	Gdip_DeleteGraphics(nwpGraphics)
+	Gdip_DisposeImage(pBitmap)
+
+	return nwpBitmap
 }
