@@ -274,7 +274,9 @@ else
 {
 	GoSub, CloseStartMenu
 	CoordMode, Tooltip, Screen
-	WinGet, exename, ProcessName,A
+	WinGet, new_exename, ProcessName,A
+	if(new_exename)
+		exename:=new_exename
 	WinGet, active_id, ID, A
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
@@ -303,7 +305,7 @@ else
 		if(i==1)
 			sep:=0
 		Gui 2:Add, Picture, % "x+" . sep . " y20 w230 h230 hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp y203 w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE"
+		Gui 2:Add, Picture, % "xp y153 w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
@@ -538,6 +540,8 @@ global wsNoBorder
 global wsIcon
 global lastWS
 
+WinGetTitle, Title, % "ahk_id " . SourceWin
+
 lastWS[SourceWin]:=A_TickCount
 
 Bord:=10
@@ -545,7 +549,7 @@ DstWidth:=DstWidth-Bord
 DstHeight:=DstHeight-Bord
 pBitmapI :=Gdip_CreateBitmapFromHICON(Get_Window_Icon(SourceWin))
 w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
-pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 64, 64, 0)
+pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 128, 128, 0)
 hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 
 wsIcon[SourceWin]:=hBitmapI
@@ -557,6 +561,12 @@ pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+pBrush := Gdip_BrushCreateSolid(0xbb721CAA)
+Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
+Gdip_DeleteBrush(pBrush)
+Options := "x64 y200 h30 w200 s20 Bottom cffffffff"
+Font := "Arial"
+Gdip_TextToGraphics(GB, Title, Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapWB)
 
 wsBorder[SourceWin]:=hBitmapB
@@ -567,6 +577,13 @@ pBrush := Gdip_BrushCreateSolid(0x00ffffff)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+pBrush := Gdip_BrushCreateSolid(0xbb333333)
+Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
+Gdip_DeleteBrush(pBrush)
+Options := "x64 y200 h30 w200 s20 Bottom cbbffffff"
+Font := "Arial"
+Gdip_TextToGraphics(G, Title, Options, Font, DstWidth-Bord, 30)
+
 hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
 
 wsNoBorder[SourceWin]:=hBitmap
