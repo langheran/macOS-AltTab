@@ -142,6 +142,7 @@ if(prevWindowId!="")
 		Sleep, 10
 	}
 }
+Gui, 2:  Cancel
 Gui, 2:  Destroy
 return
 
@@ -378,6 +379,7 @@ else
 			Sleep, 10
 		}
 	}
+	Gui, 2:  Cancel
 	Gui, 2:  Destroy
 }
 return
@@ -613,6 +615,9 @@ limittext(s,words=5,len=25)
     if (A_Index = words)
       break
   }
+  r:=LTrim(RTrim(r))
+  if(SubStr(r, -1)=" -")
+	r:=RTrim(LTrim(SubStr(r, 1, StrLen(r)-1)))
   return r
 }
 
