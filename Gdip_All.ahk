@@ -492,9 +492,16 @@ PrintWindow(hwnd, hdc, Flags=0)
 {
 	Ptr := A_PtrSize ? "UPtr" : "UInt"
 	Flags |= 2
-	;PW_RENDERFULLCONTENT = $00000002
+	;PW_RENDERFULLCONTENT = $00000002 ; GPU
 	return DllCall("PrintWindow", Ptr, hwnd, Ptr, hdc, "uint", Flags)
 }
+
+; PrintWindow(hwnd, hdc, Flags=0)
+; {
+; 	getdc_dc:=dllcall("GetDC", uint,0)
+; 	wingetpos,x,y,w,h,% "ahk_id " hwnd
+; 	return dllcall("BitBlt",  uint,hdc,   int,0,   int,0,   int,w,   int,h,        uint,getdc_dc,   int,x,   int,y,   uint,0xCC0020)
+; }
 
 ;#####################################################################################
 

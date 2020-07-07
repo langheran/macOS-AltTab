@@ -662,7 +662,7 @@ For Key, hBitmap in wsIcon{
 	}
 	else
 	{
-		CopyWinImgToCache(sourceWin,300, 300)
+		CopyWinImgToCache(Key,300, 300)
 	}
 }
 return
