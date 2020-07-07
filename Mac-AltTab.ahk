@@ -73,6 +73,7 @@ return InStr(name, "SearchUI.exe")
 }
 
 !Tab::
+SetTimer, RefreshActiveWin, -10
 GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
@@ -273,6 +274,7 @@ if(0)
 }
 else
 {
+	SetTimer, RefreshActiveWin, -10
 	GoSub, CloseStartMenu
 	CoordMode, Tooltip, Screen
 	WinGet, new_exename, ProcessName,A
@@ -651,6 +653,11 @@ getWsIcon(sourceWin){
 	return wsIcon[sourceWin]
 }
 
+RefreshActiveWin:
+WinGet, active_id, ID, A
+CopyWinImgToCache(active_id,300, 300)
+return
+
 RefreshWS:
 if(WinExist("ahk_id " . guid_id))
 	return
@@ -662,7 +669,9 @@ For Key, hBitmap in wsIcon{
 	}
 	else
 	{
-		CopyWinImgToCache(Key,300, 300)
+		if(!WinActive("ahk_id " . Key)){
+			CopyWinImgToCache(Key,300, 300)
+		}
 	}
 }
 return
