@@ -324,8 +324,8 @@ else
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
-			refresh_id:=prevWindowId
-			SetTimer, RefreshWin, -1
+			; refresh_id:=prevWindowId
+			; SetTimer, RefreshWin, -1
 			SetImage(myIcon, getWsNoBorder(prevWindowId))
 			; WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
