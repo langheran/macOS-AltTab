@@ -12,7 +12,7 @@ wsNoBorder:={}
 wsIcon:={}
 lastWS:={}
 OnExit Exit
-SetTimer, RefreshWS, 5000
+SetTimer, RefreshWS, 30000
 
 #Include RunAsTask.ahk
 RunAsTask()
@@ -73,7 +73,8 @@ return InStr(name, "SearchUI.exe")
 }
 
 !Tab::
-SetTimer, RefreshActiveWin, -10
+WinGet, refresh_id, ID, A
+SetTimer, RefreshWin, -10
 GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
 WinGet, active_id, ID, A
@@ -274,7 +275,8 @@ if(0)
 }
 else
 {
-	SetTimer, RefreshActiveWin, -10
+	WinGet, refresh_id, ID, A
+	SetTimer, RefreshWin, -10
 	GoSub, CloseStartMenu
 	CoordMode, Tooltip, Screen
 	WinGet, new_exename, ProcessName,A
@@ -317,11 +319,13 @@ else
 	}
 	Gui, 2:  Show, NoActivate 
 	count:=0
-	prevWindowId:=""
+	prevWindowId:=active_id
 	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
+			refresh_id:=prevWindowId
+			SetTimer, RefreshWin, -1
 			SetImage(myIcon, getWsNoBorder(prevWindowId))
 			; WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
 			GuiControl, +Redraw,    % ThumbIcon
@@ -653,9 +657,8 @@ getWsIcon(sourceWin){
 	return wsIcon[sourceWin]
 }
 
-RefreshActiveWin:
-WinGet, active_id, ID, A
-CopyWinImgToCache(active_id,300, 300)
+RefreshWin:
+CopyWinImgToCache(refresh_id,300, 300)
 return
 
 RefreshWS:
