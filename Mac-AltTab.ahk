@@ -101,19 +101,20 @@ Loop % IdListCount{
 	WinGet FileName, ProcessPath, % "ahk_id " IdList[A_Index]
 	ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
 	hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
-
 	i:=A_Index
 	sep:=10
 	if(i==1)
 		sep:=0
-	Gui, 2:  Add, Text, w32 h32 x+%sep% y20 vText%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
+	Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
+	hwnds[A_Index]:=IdList[A_Index]
 	myIcon:=myIcon%i%
 	SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 }
 Gui, 2:  Show, NoActivate 
 count:=0
 prevWindowId:=""
-While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
+selectWindow:=0
+While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow)
 {
 	if (GetKeyState("Tab", "P") || count=0)
 	{
