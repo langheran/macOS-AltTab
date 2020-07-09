@@ -79,16 +79,22 @@ return InStr(name, "SearchUI.exe")
 }
 
 !Tab::
+WinGet, active_id, ID, A
+if(!active_id)
+{
+	IdList:=WinsGetProcesses(0)
+	WinActivate, "ahk_id " . IdList[1]
+}
 WinGet, refresh_id, ID, A
 SetTimer, RefreshWin, -10
 GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
-WinGet, active_id, ID, A
 IdList:=WinsGetProcesses(0)
 IdListCount:=IdList._MaxIndex()
 WS_BORDER := 0x00800000
 Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
 guid_id:=WinExist()
+; Gui, 2: Color, 333333
 Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
 	winget, winpid, PID, % "ahk_id " IdList[A_Index]
@@ -283,7 +289,10 @@ else
 {
 	WinGet, active_id, ID, A
 	if(!active_id)
-		Send, !{Esc}
+	{
+		IdList:=WinsGetProcesses(0)
+		WinActivate, "ahk_id " . IdList[1]
+	}
 	WinGet, refresh_id, ID, A
 	SetTimer, RefreshWin, -10
 	GoSub, CloseStartMenu
@@ -294,6 +303,8 @@ else
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
 	IdListCount:=IdList._MaxIndex()
+	if(!IdListCount)
+		return
 	; If(IdListCount<3)
 	; {
 	; 	KeyWait LWin, U T0.2
