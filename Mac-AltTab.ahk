@@ -10,7 +10,9 @@ pToken := Gdip_Startup()
 wsBorder:={}
 wsNoBorder:={}
 wsIcon:={}
+wsTitle:={}
 lastWS:={}
+hwnds:={}
 OnExit Exit
 SetTimer, RefreshWS, 30000
 
@@ -35,7 +37,7 @@ SendMode Input
 
 return
 
-Exit:
+CleanObjects:
 For Key, hBitmap in wsBorder{
 	DeleteObject(hBitmap)
 }
@@ -46,6 +48,10 @@ For Key, hBitmap in wsIcon{
 	DeleteObject(hBitmap)
 }
 Gdip_Shutdown(pToken)
+return
+
+Exit:
+GoSub, CleanObjects
 ExitApp
 
 !CapsLock::
@@ -303,31 +309,42 @@ else
 	WS_BORDER := 0x00800000
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
 	guid_id:=WinExist()
+	Gui, 2: Color, 333333
 	Gui, 2:  Margin, 20, 20
 	Loop % IdListCount{
 		i:=A_Index
-		sep:=10
-		if(i==1)
-			sep:=0
-		Gui 2:Add, Picture, % "x+" . sep . " y20 w230 h230 hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp y153 w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
+		sep:="+10"
+		if(Mod(i-1,5)=0)
+			sep:="20"
+		line:=(Floor((i-1)/5))
+		y:=20+240*line
+		y2:=153+240*line
+		Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
+		Gui 2:Add, Picture, % "xp y" . y2 . " w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
+		hwnds[A_Index]:=sourceWin
 		SetImage(image, getWsNoBorder(sourceWin))
 		SetImage(icon, getWsIcon(sourceWin))
 	}
+	y:=20+240*(line+1)+10
+	gwidth := Min(IdListCount,5)*230+(Min(IdListCount,5)-1)*10
+	Gui, 2: Font, SF Pro Display Bold
+	Gui, 2: Add, Text, x20 y%y% w%gwidth% h30 +0x200 vTitleFrame cWhite +Left ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
 	Gui, 2:  Show, NoActivate 
 	count:=0
 	prevWindowId:=active_id
-	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
+	selectWindow:=0
+	While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow)
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
 			; refresh_id:=prevWindowId
 			; SetTimer, RefreshWin, -1
+			GuiControl, -Redraw,    % myIcon
 			SetImage(myIcon, getWsNoBorder(prevWindowId))
-			; WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+			GuiControl, +Redraw,    % myIcon
 			GuiControl, +Redraw,    % ThumbIcon
 
 			shiftPressed := GetKeyState("Shift")
@@ -339,8 +356,10 @@ else
 			myIconBorder:=myIconBorder%i%
 			ThumbIcon:=ThumbIcon%i%
 
+			GuiControl, -Redraw,    % myIcon
 			SetImage(myIcon, getWsBorder(IdList[i]))
-			; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+			GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
+			GuiControl, +Redraw,    % myIcon
 			GuiControl, +Redraw,    % ThumbIcon
 
 			prevWindowId:=IdList[i]
@@ -388,6 +407,12 @@ else
 	Gui, 2:  Cancel
 	Gui, 2:  Destroy
 }
+return
+
+SelectWindow:
+	iconNumber:=StrReplace(A_GuiControl, "Icon")
+	prevWindowId:=hwnds[iconNumber]
+	selectWindow:=1
 return
 
 CalculateToolTipDisplayRight(CData) {
@@ -610,7 +635,7 @@ if pBitmap=0
 return true
 }
 
-limittext(s,words=5,len=25)
+limittext(s,words=5,len=20)
 {
   r := ""
   loop,parse,s,`t` ,
@@ -621,10 +646,24 @@ limittext(s,words=5,len=25)
     if (A_Index = words)
       break
   }
+  if(r=="")
+	r:=s
   r:=LTrim(RTrim(r))
   if(SubStr(r, -1)=" -")
 	r:=RTrim(LTrim(SubStr(r, 1, StrLen(r)-1)))
   return r
+}
+
+getWsTitle(sourceWin){
+	global wsTitle
+	global lastWS
+
+	if(wsTitle.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+		return wsTitle[sourceWin]
+	WinGetTitle, title, % "ahk_id " . sourceWin
+	lastWS[sourceWin]:=A_TickCount
+	wsTitle[sourceWin]:=title
+	return wsTitle[sourceWin]
 }
 
 getWsBorder(sourceWin){
@@ -666,9 +705,13 @@ if(WinExist("ahk_id " . guid_id))
 	return
 For Key, hBitmap in wsIcon{
 	if(!WinExist("ahk_id " . Key)){
+		DeleteObject(wsIcon[Key])
+		DeleteObject(wsNoBorder[Key])
+		DeleteObject(wsBorder[Key])
 		wsIcon.Delete(Key)
 		wsNoBorder.Delete(Key)
 		wsBorder.Delete(Key)
+		wsTitle.Delete(Key)
 	}
 	else
 	{
@@ -676,6 +719,12 @@ For Key, hBitmap in wsIcon{
 			CopyWinImgToCache(Key,300, 300)
 		}
 	}
+}
+if(Mod(A_TickCount, 30000)==0)
+{
+	Reload
+	; GoSub, CleanObjects
+	; pToken := Gdip_Startup()
 }
 return
 
