@@ -330,6 +330,10 @@ else
 	}
 	y:=20+240*(line+1)+10
 	gwidth := Min(IdListCount,5)*230+(Min(IdListCount,5)-1)*10
+	if(gwidth="")
+		gwidth:=0
+	min_win_width:=3
+	gwidth:=Max(gwidth, min_win_width*230+(min_win_width-1)*10)
 	Gui, 2: Font, SF Pro Display Bold
 	Gui, 2: Add, Text, x20 y%y% w%gwidth% h30 +0x200 vTitleFrame cWhite +Left ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
 	Gui, 2:  Show, NoActivate 
@@ -638,7 +642,7 @@ return true
 limittext(s,words=5,len=20)
 {
   r := ""
-  loop,parse,s,`t` ,
+  loop,parse,s,`t` -,
   {
     if (StrLen(r . " " . A_LoopField) > len)
       break
@@ -647,7 +651,11 @@ limittext(s,words=5,len=20)
       break
   }
   if(r=="")
-	r:=s
+  loop,parse,s,`t` -,
+  {
+    r .= " " A_LoopField
+    break
+  }
   r:=LTrim(RTrim(r))
   if(SubStr(r, -1)=" -")
 	r:=RTrim(LTrim(SubStr(r, 1, StrLen(r)-1)))
