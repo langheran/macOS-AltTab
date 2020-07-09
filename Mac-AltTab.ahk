@@ -614,7 +614,7 @@ Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, 
 pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
-Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cbbffffff"
+Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold c99ffffff"
 Font := "SF Pro Display"
 Gdip_TextToGraphics(G, Title, Options, Font, DstWidth-Bord, 30)
 
@@ -661,8 +661,8 @@ getWsTitle(sourceWin){
 	if(wsTitle.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsTitle[sourceWin]
 	WinGetTitle, title, % "ahk_id " . sourceWin
-	lastWS[sourceWin]:=A_TickCount
 	wsTitle[sourceWin]:=title
+	lastWS[sourceWin]:=A_TickCount
 	return wsTitle[sourceWin]
 }
 
@@ -716,7 +716,10 @@ For Key, hBitmap in wsIcon{
 	else
 	{
 		if(!WinActive("ahk_id " . Key)){
+			WinGetTitle, title, % "ahk_id " . sourceWin
+			wsTitle[sourceWin]:=title
 			CopyWinImgToCache(Key,300, 300)
+			lastWS[sourceWin]:=A_TickCount
 		}
 	}
 }
