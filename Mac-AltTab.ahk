@@ -281,6 +281,9 @@ if(0)
 }
 else
 {
+	WinGet, active_id, ID, A
+	if(!active_id)
+		Send, !{Esc}
 	WinGet, refresh_id, ID, A
 	SetTimer, RefreshWin, -10
 	GoSub, CloseStartMenu
@@ -288,7 +291,6 @@ else
 	WinGet, new_exename, ProcessName,A
 	if(new_exename)
 		exename:=new_exename
-	WinGet, active_id, ID, A
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
 	IdListCount:=IdList._MaxIndex()
