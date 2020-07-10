@@ -13,11 +13,14 @@ wsIcon:={}
 wsTitle:={}
 lastWS:={}
 hwnds:={}
+bgrColor := "000000"
+makeTranslucent:=1
 OnExit Exit
 SetTimer, RefreshWS, 30000
 
 #Include RunAsTask.ahk
 RunAsTask()
+OnMessage(0x404, "AHK_NOTIFYICON")
 
 ListLines Off
 Process, Priority, , A
@@ -92,9 +95,8 @@ WinGet, exename, ProcessName,A
 IdList:=WinsGetProcesses(0)
 IdListCount:=IdList._MaxIndex()
 WS_BORDER := 0x00800000
-Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
+Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 guid_id:=WinExist()
-; Gui, 2: Color, 333333
 Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
 	winget, winpid, PID, % "ahk_id " IdList[A_Index]
@@ -109,6 +111,15 @@ Loop % IdListCount{
 	hwnds[A_Index]:=IdList[A_Index]
 	myIcon:=myIcon%i%
 	SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+}
+if(!makeTranslucent)
+{
+	;Gui, 2: Color, 333333
+}
+else
+{
+	Gui, 2: Color, c%bgrColor%
+	SetAcrylicGlassEffect(bgrColor, 9, hGui)
 }
 Gui, 2:  Show, NoActivate 
 count:=0
@@ -321,9 +332,8 @@ else
 	; 	}
 	; }
 	WS_BORDER := 0x00800000
-	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound
+	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 	guid_id:=WinExist()
-	Gui, 2: Color, 333333
 	Gui, 2:  Margin, 20, 20
 	Loop % IdListCount{
 		i:=A_Index
@@ -348,8 +358,21 @@ else
 		gwidth:=0
 	min_win_width:=3
 	gwidth:=Max(gwidth, min_win_width*230+(min_win_width-1)*10)
-	Gui, 2: Font, SF Pro Display Bold
-	Gui, 2: Add, Text, x20 y%y% w%gwidth% h30 +0x200 vTitleFrame cWhite +Left ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
+	gheight:=30
+	if(!makeTranslucent)
+	{
+		Gui, 2: Font, SF Pro Display Bold
+		Gui, 2: Add, Text, xp yp w%gwidth% h%gheight% +0x200 vTitleFrame cWhite +Left BackgroundTrans ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
+		Gui, 2: Color, 333333
+	}
+	else
+	{
+		Gui, 2: Add, Picture, x20 y%y% w%gwidth% h%gheight% hwndTextBackground  +0xE
+		gwidth1:=gwidth*(A_ScreenDPI/96)
+		gheight1:=gheight*(A_ScreenDPI/96)
+		Gui, 2: Color, c%bgrColor%
+		SetAcrylicGlassEffect(bgrColor, 9, hGui)
+	}
 	Gui, 2:  Show, NoActivate 
 	count:=0
 	prevWindowId:=active_id
@@ -376,7 +399,15 @@ else
 
 			GuiControl, -Redraw,    % myIcon
 			SetImage(myIcon, getWsBorder(IdList[i]))
-			GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
+			if(!makeTranslucent)
+			{
+				GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
+			}
+			else
+			{
+				SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
+			}
+			GuiControl, +Redraw,    % TextBackground
 			GuiControl, +Redraw,    % myIcon
 			GuiControl, +Redraw,    % ThumbIcon
 
@@ -583,6 +614,25 @@ WinIsVisible(ahk_id="A"){
 }
 
 ;###########################################################
+SetTitleFrameText(DstWidth,DstHeight, color, text, ctrl)
+{
+	pBitmapB := Gdip_CreateBitmap(DstWidth,DstHeight)
+	GB := Gdip_GraphicsFromImage(pBitmapB)
+	pBrush := Gdip_BrushCreateSolid(color)
+	Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth, DstHeight)
+	if(text)
+	{
+		Options := "x0 y5 h" . (DstHeight) . " w" . (DstWidth) . " s24 Left Bold cffffffff"
+		Font := "SF Pro Display"
+		Gdip_TextToGraphics(GB, "  " . text, Options, Font, DstWidth, DstHeight)
+	}
+	hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
+	SetImage(ctrl, hBitmap)
+	DeleteObject(hBitmap)
+	Gdip_DeleteBrush(pBrush)
+	Gdip_DeleteGraphics(GB)
+	Gdip_DisposeImage(pBitmapB)
+}
 CopyWinImgToCache(SourceWin,DstWidth, DstHeight)
 {
 global Bord
@@ -607,8 +657,8 @@ hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 wsIcon[SourceWin]:=hBitmapI
 
 pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
-pBitmapWB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
-GB := Gdip_GraphicsFromImage(pBitmapWB)
+pBitmapB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
+GB := Gdip_GraphicsFromImage(pBitmapB)
 pBrush := Gdip_BrushCreateSolid(0xff721CAA)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
@@ -619,7 +669,7 @@ Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
 Font := "SF Pro Display"
 Gdip_TextToGraphics(GB, Title, Options, Font, DstWidth-Bord, 30)
-hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapWB)
+hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 
 wsBorder[SourceWin]:=hBitmapB
 
@@ -645,7 +695,6 @@ Gdip_DeleteGraphics(GB)
 
 Gdip_DisposeImage(pBitmap)
 Gdip_DisposeImage(pBitmapB)
-
 Gdip_DisposeImage(pBitmapW)
 Gdip_DisposeImage(pBitmapI)
 if pBitmap=0
@@ -838,4 +887,50 @@ Gdip_ResizepBitmap(pBitmap,SrcW,SrcH,DstW,DstH,Bord:=0)
 	Gdip_DisposeImage(pBitmap)
 
 	return nwpBitmap
+}
+
+AHK_NOTIFYICON(wParam, lParam)
+{
+	if (lParam = 0x203) { ; user double left-clicked tray icon
+		Reload
+	}
+}
+
+ConvertToBGRfromRGB(RGB) { ; Get numeric BGR value from numeric RGB value or HTML color name
+  ; HEX values
+  BGR := SubStr(RGB, -1, 2) SubStr(RGB, 1, 4) 
+  Return BGR 
+}
+
+SetAcrylicGlassEffect(thisColor, thisAlpha, hWindow) {
+  ; based on https://github.com/jNizM/AHK_TaskBar_SetAttr/blob/master/scr/TaskBar_SetAttr.ahk
+  ; by jNizM
+    initialAlpha := thisAlpha
+    If (thisAlpha<16)
+       thisAlpha := 16
+    Else If (thisAlpha>245)
+       thisAlpha := 245
+
+
+    thisColor := ConvertToBGRfromRGB(thisColor)
+    thisAlpha := Format("{1:#x}", thisAlpha)
+    gradient_color := thisAlpha . thisColor
+
+    Static init, accent_state := 4, ver := DllCall("GetVersion") & 0xff < 10
+    Static pad := A_PtrSize = 8 ? 4 : 0, WCA_ACCENT_POLICY := 19
+    accent_size := VarSetCapacity(ACCENT_POLICY, 16, 0)
+    NumPut(accent_state, ACCENT_POLICY, 0, "int")
+
+    If (RegExMatch(gradient_color, "0x[[:xdigit:]]{8}"))
+       NumPut(gradient_color, ACCENT_POLICY, 8, "int")
+
+    VarSetCapacity(WINCOMPATTRDATA, 4 + pad + A_PtrSize + 4 + pad, 0)
+    && NumPut(WCA_ACCENT_POLICY, WINCOMPATTRDATA, 0, "int")
+    && NumPut(&ACCENT_POLICY, WINCOMPATTRDATA, 4 + pad, "ptr")
+    && NumPut(accent_size, WINCOMPATTRDATA, 4 + pad + A_PtrSize, "uint")
+    If !(DllCall("user32\SetWindowCompositionAttribute", "ptr", hWindow, "ptr", &WINCOMPATTRDATA))
+       Return 0 
+    thisOpacity := (initialAlpha<16) ? 60 + initialAlpha*9 : 250
+    WinSet, Transparent, %thisOpacity%, ahk_id %hWindow%
+    Return 1
 }
