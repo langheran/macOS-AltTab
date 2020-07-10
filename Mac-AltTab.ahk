@@ -832,9 +832,9 @@ For Key, hBitmap in wsIcon{
 }
 if(Mod(A_TickCount, 30000)==0)
 {
-	Reload
-	; GoSub, CleanObjects
-	; pToken := Gdip_Startup()
+	; Reload
+	GoSub, CleanObjects
+	pToken := Gdip_Startup()
 }
 return
 
