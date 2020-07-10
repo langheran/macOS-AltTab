@@ -104,13 +104,32 @@ Loop % IdListCount{
 	ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
 	hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
 	i:=A_Index
+	hwnds[A_Index]:=IdList[A_Index]
 	sep:=10
 	if(i==1)
 		sep:=0
-	Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
-	hwnds[A_Index]:=IdList[A_Index]
-	myIcon:=myIcon%i%
-	SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+	if(!makeTranslucent)
+	{
+		Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
+		myIcon:=myIcon%i%
+		SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+	} 
+	else
+	{
+		Gui, 2: Add, Picture, w42 h42 x+%sep% y20 gSelectWindow hwndmyIconBackground%i%  +0xE
+		myIconBackground:=myIconBackground%i%
+		SetTitleFrameText(42*(A_ScreenDPI/96),42*(A_ScreenDPI/96),0xff721CAA,"", myIconBackground)
+		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
+		GuiControl, Hide,    % myIconBackground
+		Gui, 2: Add, Picture, w32 h32 xp+5 yp+5 gSelectWindow BackgroundTrans vIcon%i% hwndmyIcon%i%  +0xE
+		myIcon:=myIcon%i%
+		pBitmapI :=Gdip_CreateBitmapFromHICON(hIcon)
+		hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
+		SetImage(myIcon, hBitmapI)
+		DeleteObject(hBitmapI)
+		Gdip_DisposeImage(pBitmapI)
+	}
+	DeleteObject(hIcon)
 }
 if(!makeTranslucent)
 {
@@ -129,14 +148,31 @@ While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selec
 {
 	if (GetKeyState("Tab", "P") || count=0)
 	{
-		WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+		if(!makeTranslucent)
+		{
+			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+		}
+		else
+		{
+			GuiControl, Hide,    % myIconBackground
+			GuiControl, +Redraw,    % myIcon
+		}
 		shiftPressed := GetKeyState("Shift")
 		count:=count+1-2*shiftPressed
 		if(count<0)
 			count:=IdList._MaxIndex()
 		i:=Abs(Mod(count,IdListCount))+1
 		myIcon:=myIcon%i%
-		WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+		if(!makeTranslucent)
+		{
+			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+		}
+		else
+		{
+			myIconBackground:=myIconBackground%i%
+			GuiControl, Show,    % myIconBackground
+			GuiControl, +Redraw,    % myIcon
+		}
 		prevWindowId:=IdList[i]
 		KeyWait Tab
 	}
