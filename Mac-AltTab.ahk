@@ -15,6 +15,7 @@ lastWS:={}
 hwnds:={}
 bgrColor := "000000"
 makeTranslucent:=1
+WS_BORDER := 0x00800000
 OnExit Exit
 SetTimer, RefreshWS, 30000
 
@@ -94,7 +95,6 @@ GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
 IdList:=WinsGetProcesses(0)
 IdListCount:=IdList._MaxIndex()
-WS_BORDER := 0x00800000
 Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 guid_id:=WinExist()
 Gui, 2:  Margin, 20, 20
@@ -367,7 +367,6 @@ else
 	; 		return
 	; 	}
 	; }
-	WS_BORDER := 0x00800000
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 	guid_id:=WinExist()
 	Gui, 2:  Margin, 20, 20
@@ -423,6 +422,7 @@ else
 			SetImage(myIcon, getWsNoBorder(prevWindowId))
 			GuiControl, +Redraw,    % myIcon
 			GuiControl, +Redraw,    % ThumbIcon
+			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
 
 			shiftPressed := GetKeyState("Shift")
 			count:=count+1-2*shiftPressed
@@ -446,6 +446,7 @@ else
 			GuiControl, +Redraw,    % TextBackground
 			GuiControl, +Redraw,    % myIcon
 			GuiControl, +Redraw,    % ThumbIcon
+			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 
 			prevWindowId:=IdList[i]
 			KeyWait Tab
