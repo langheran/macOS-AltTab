@@ -402,12 +402,27 @@ else
 	else
 	{
 		Gui, 2: Add, Picture, x20 y%y% w%gwidth% h%gheight% hwndTextBackground  +0xE
-		gwidth1:=gwidth*(A_ScreenDPI/96)
-		gheight1:=gheight*(A_ScreenDPI/96)
+		gwidth1:=Ceil(gwidth*(A_ScreenDPI/96))
+		gheight1:=Ceil(gheight*(A_ScreenDPI/96))
 		Gui, 2: Color, c%bgrColor%
 		SetAcrylicGlassEffect(bgrColor, 9, hGui)
 	}
 	Gui, 2:  Show, NoActivate 
+
+	if(1) ; Last border correction
+	{
+		myIcon:=myIcon%i%
+		ThumbIcon:=ThumbIcon%i%
+		SetImage(myIcon, getWsBorder(IdList[i]))
+		WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+		GuiControl, +Redraw,    % myIcon
+		SetImage(myIcon, getWsNoBorder(IdList[i]))
+		WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+		GuiControl, +Redraw,    % myIcon
+		GuiControl, +Redraw,    % ThumbIcon
+		Sleep, 1
+	}
+
 	count:=0
 	prevWindowId:=active_id
 	selectWindow:=0
@@ -417,11 +432,14 @@ else
 		{
 			; refresh_id:=prevWindowId
 			; SetTimer, RefreshWin, -1
-			GuiControl, -Redraw,    % myIcon
-			SetImage(myIcon, getWsNoBorder(prevWindowId))
-			GuiControl, +Redraw,    % myIcon
-			GuiControl, +Redraw,    % ThumbIcon
-			WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+			if(count)
+			{
+				GuiControl, -Redraw,    % myIcon
+				SetImage(myIcon, getWsNoBorder(prevWindowId))
+				GuiControl, +Redraw,    % myIcon
+				GuiControl, +Redraw,    % ThumbIcon
+				WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+			}
 
 			shiftPressed := GetKeyState("Shift")
 			count:=count+1-2*shiftPressed
@@ -682,7 +700,7 @@ Title:=limittext(Title)
 
 lastWS[SourceWin]:=A_TickCount
 
-Bord:=10
+Bord:=10*(A_ScreenDPI/96)
 DstWidth:=DstWidth-Bord
 DstHeight:=DstHeight-Bord
 pBitmapI :=Gdip_CreateBitmapFromHICON(Get_Window_Icon(SourceWin))
@@ -709,6 +727,8 @@ hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 
 wsBorder[SourceWin]:=hBitmapB
 
+DstWidth:=DstWidth-2
+DstHeight:=DstHeight-2
 pBitmapW := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 G := Gdip_GraphicsFromImage(pBitmapW)
 pBrush := Gdip_BrushCreateSolid(0xff333333)
@@ -779,7 +799,7 @@ getWsBorder(sourceWin){
 
 	if(wsBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsBorder[sourceWin]
-	CopyWinImgToCache(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsBorder[sourceWin]
 }
 
@@ -789,7 +809,7 @@ getWsNoBorder(sourceWin){
 
 	if(wsNoBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsNoBorder[sourceWin]
-	CopyWinImgToCache(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsNoBorder[sourceWin]
 }
 
@@ -799,12 +819,12 @@ getWsIcon(sourceWin){
 
 	if(wsIcon.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsIcon[sourceWin]
-	CopyWinImgToCache(sourceWin,300, 300)
+	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsIcon[sourceWin]
 }
 
 RefreshWin:
-CopyWinImgToCache(refresh_id,300, 300)
+CopyWinImgToCache(refresh_id, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 return
 
 RefreshWS:
@@ -825,7 +845,7 @@ For Key, hBitmap in wsIcon{
 		if(!WinActive("ahk_id " . Key)){
 			WinGetTitle, title, % "ahk_id " . sourceWin
 			wsTitle[sourceWin]:=title
-			CopyWinImgToCache(Key,300, 300)
+			CopyWinImgToCache(Key, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 			lastWS[sourceWin]:=A_TickCount
 		}
 	}
