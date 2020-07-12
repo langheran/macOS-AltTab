@@ -13,7 +13,7 @@ wsIcon:={}
 wsTitle:={}
 lastWS:={}
 hwnds:={}
-bgrColor := "000000"
+bgrColor := "111111"
 makeTranslucent:=1
 WS_BORDER := 0x00800000
 OnExit Exit
@@ -661,7 +661,7 @@ SetTitleFrameText(DstWidth,DstHeight, color, text, ctrl)
 	{
 		Options := "x0 y5 h" . (DstHeight) . " w" . (DstWidth) . " s24 Left Bold cffffffff"
 		Font := "SF Pro Display"
-		Gdip_TextToGraphics(GB, "  " . text, Options, Font, DstWidth, DstHeight)
+		Gdip_TextToGraphics(GB, " " . text, Options, Font, DstWidth, DstHeight)
 	}
 	hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 	SetImage(ctrl, hBitmap)
