@@ -372,14 +372,12 @@ else
 	Gui, 2:  Margin, 20, 20
 	Loop % IdListCount{
 		i:=A_Index
-		sep:="+10"
-		if(Mod(i-1,5)=0)
-			sep:="20"
+		sep:=20+Mod(i-1,5)*240
 		line:=(Floor((i-1)/5))
 		y:=20+240*line
 		y2:=153+240*line-5
 		Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp+5 y" . y2 . " w230 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
+		Gui 2:Add, Picture, % "xp+5 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
@@ -394,10 +392,11 @@ else
 	min_win_width:=3
 	gwidth:=Max(gwidth, min_win_width*230+(min_win_width-1)*10)
 	gheight:=30
+	; makeTranslucent:=0
 	if(!makeTranslucent)
 	{
 		Gui, 2: Font, SF Pro Display Bold
-		Gui, 2: Add, Text, xp yp w%gwidth% h%gheight% +0x200 vTitleFrame cWhite +Left BackgroundTrans ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
+		Gui, 2: Add, Text, x20 y%y% w%gwidth% h%gheight% +0x200 vTitleFrame cWhite +Left BackgroundTrans ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
 		Gui, 2: Color, 333333
 	}
 	else
