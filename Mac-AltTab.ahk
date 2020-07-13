@@ -378,7 +378,7 @@ ShowWindowPicker:
 		y:=20+240*line
 		y2:=153+240*line-5
 		Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp+5 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
+		Gui 2:Add, Picture, % "xp+6 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
 		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
