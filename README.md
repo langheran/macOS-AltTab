@@ -16,6 +16,10 @@ Press Windows+Tab to change between windows inside the selected application.
 
 ![image](./images/demo2.gif)
 
+Translucent view.
+
+![image](./images/demo3.gif)
+
 ## Key Shortcuts
 
 | Hotkey                         | Action                                     |
