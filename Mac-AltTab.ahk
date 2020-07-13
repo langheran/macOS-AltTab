@@ -12,10 +12,12 @@ wsNoBorder:={}
 wsIcon:={}
 wsTitle:={}
 lastWS:={}
+exeIcons:={}
 hwnds:={}
 bgrColor := "111111"
 makeTranslucent:=1
 WS_BORDER := 0x00800000
+ACCENT_COLOR:="0xff" . getAccentColor() ; 0xff721CAA
 OnExit Exit
 SetTimer, RefreshWS, 30000
 
@@ -99,10 +101,6 @@ Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 guid_id:=WinExist()
 Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
-	winget, winpid, PID, % "ahk_id " IdList[A_Index]
-	WinGet FileName, ProcessPath, % "ahk_id " IdList[A_Index]
-	ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
-	hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
 	i:=A_Index
 	hwnds[A_Index]:=IdList[A_Index]
 	sep:=10
@@ -112,22 +110,19 @@ Loop % IdListCount{
 	{
 		Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
 		myIcon:=myIcon%i%
+		hIcon:=getIconForExe(IdList[A_Index])
 		SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 	} 
 	else
 	{
 		Gui, 2: Add, Picture, w42 h42 x+%sep% y20 gSelectWindow hwndmyIconBackground%i%  +0xE
 		myIconBackground:=myIconBackground%i%
-		SetTitleFrameText(42*(A_ScreenDPI/96),42*(A_ScreenDPI/96),0xff721CAA,"", myIconBackground)
+		SetTitleFrameText(42*(A_ScreenDPI/96),42*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
 		GuiControl, Hide,    % myIconBackground
 		Gui, 2: Add, Picture, w32 h32 xp+5 yp+5 gSelectWindow BackgroundTrans vIcon%i% hwndmyIcon%i%  +0xE
 		myIcon:=myIcon%i%
-		pBitmapI :=Gdip_CreateBitmapFromHICON(hIcon)
-		hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
-		SetImage(myIcon, hBitmapI)
-		DeleteObject(hBitmapI)
-		Gdip_DisposeImage(pBitmapI)
+		SetImage(myIcon, getIconForExe(IdList[A_Index]))
 	}
 	DeleteObject(hIcon)
 }
@@ -140,11 +135,12 @@ else
 	Gui, 2: Color, c%bgrColor%
 	SetAcrylicGlassEffect(bgrColor, 9, hGui)
 }
-Gui, 2:  Show, NoActivate 
+GoSub, ShowWindow
 count:=0
 prevWindowId:=""
 selectWindow:=0
-While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow)
+closeWindow:=0
+While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow && !closeWindow)
 {
 	if (GetKeyState("Tab", "P") || count=0)
 	{
@@ -348,11 +344,6 @@ else
 	WinGet, new_exename, ProcessName,A
 	if(new_exename)
 		exename:=new_exename
-	IdList:=WinsGetWindows(exename,0)
-	count:=0
-	IdListCount:=IdList._MaxIndex()
-	if(!IdListCount)
-		return
 	; If(IdListCount<3)
 	; {
 	; 	KeyWait LWin, U T0.2
@@ -367,6 +358,16 @@ else
 	; 		return
 	; 	}
 	; }
+	GoSub, ShowWindowPicker
+}
+return
+
+ShowWindowPicker:
+	IdList:=WinsGetWindows(exename,0)
+	count:=0
+	IdListCount:=IdList._MaxIndex()
+	if(!IdListCount)
+		return
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 	guid_id:=WinExist()
 	Gui, 2:  Margin, 20, 20
@@ -407,26 +408,14 @@ else
 		Gui, 2: Color, c%bgrColor%
 		SetAcrylicGlassEffect(bgrColor, 9, hGui)
 	}
-	Gui, 2:  Show, NoActivate 
-
-	if(1) ; Last border correction
-	{
-		myIcon:=myIcon%i%
-		ThumbIcon:=ThumbIcon%i%
-		SetImage(myIcon, getWsBorder(IdList[i]))
-		WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
-		GuiControl, +Redraw,    % myIcon
-		SetImage(myIcon, getWsNoBorder(IdList[i]))
-		WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
-		GuiControl, +Redraw,    % myIcon
-		GuiControl, +Redraw,    % ThumbIcon
-		Sleep, 1
-	}
+	;SetTimer, ShowWindow, -200
+	GoSub, ShowWindow
 
 	count:=0
 	prevWindowId:=active_id
 	selectWindow:=0
-	While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow)
+	closeWindow:=0
+	While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selectWindow && !closeWindow)
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
@@ -499,7 +488,7 @@ else
 		}
 	}
 	WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
-	if(prevWindowId!="")
+	if(prevWindowId!="" && !closeWindow)
 	{
 		Loop, % 5
 		{
@@ -509,6 +498,26 @@ else
 	}
 	Gui, 2:  Cancel
 	Gui, 2:  Destroy
+	if(closeWindow)
+	{
+		GoSub, ShowWindowPicker
+	}
+return
+
+ShowWindow:
+Gui, 2:  Show, NoActivate 
+if(A_ThisHotkey=="#Tab" && (!IdListCount || IdListCount>=min_win_width)) ; Last border correction
+{
+	myIcon:=myIcon%i%
+	ThumbIcon:=ThumbIcon%i%
+	SetImage(myIcon, getWsBorder(IdList[i]))
+	WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+	GuiControl, +Redraw,    % myIcon
+	SetImage(myIcon, getWsNoBorder(IdList[i]))
+	WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+	GuiControl, +Redraw,    % myIcon
+	GuiControl, +Redraw,    % ThumbIcon
+	Sleep, 1
 }
 return
 
@@ -516,6 +525,16 @@ SelectWindow:
 	iconNumber:=StrReplace(A_GuiControl, "Icon")
 	prevWindowId:=hwnds[iconNumber]
 	selectWindow:=1
+return
+
+2GuiContextMenu:
+	if(A_GuiEvent=="RightClick")
+	{
+		iconNumber:=StrReplace(A_GuiControl, "Icon")
+		prevWindowId:=hwnds[iconNumber]
+		WinClose, ahk_id %prevWindowId%
+		closeWindow:=1
+	}
 return
 
 CalculateToolTipDisplayRight(CData) {
@@ -694,6 +713,7 @@ global wsBorder
 global wsNoBorder
 global wsIcon
 global lastWS
+global ACCENT_COLOR
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
 Title:=limittext(Title)
@@ -713,11 +733,11 @@ wsIcon[SourceWin]:=hBitmapI
 pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
 pBitmapB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 GB := Gdip_GraphicsFromImage(pBitmapB)
-pBrush := Gdip_BrushCreateSolid(0xff721CAA)
+pBrush := Gdip_BrushCreateSolid(ACCENT_COLOR)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
-pBrush := Gdip_BrushCreateSolid(0xff721CAA)
+pBrush := Gdip_BrushCreateSolid(ACCENT_COLOR)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
@@ -835,9 +855,11 @@ For Key, hBitmap in wsIcon{
 		DeleteObject(wsIcon[Key])
 		DeleteObject(wsNoBorder[Key])
 		DeleteObject(wsBorder[Key])
+		DeleteObject(exeIcons[Key])
 		wsIcon.Delete(Key)
 		wsNoBorder.Delete(Key)
 		wsBorder.Delete(Key)
+		exeIcons.Delete(Key)
 		wsTitle.Delete(Key)
 	}
 	else
@@ -989,4 +1011,41 @@ SetAcrylicGlassEffect(thisColor, thisAlpha, hWindow) {
     thisOpacity := (initialAlpha<16) ? 60 + initialAlpha*9 : 250
     WinSet, Transparent, %thisOpacity%, ahk_id %hWindow%
     Return 1
+}
+
+getAccentColor(){
+    f := A_FormatInteger
+    SetFormat, Integer, Hex
+    RegRead, BgCol, HKEY_CURRENT_USER, Software\Microsoft\Windows\DWM, AccentColor
+    BgCol:=StrReplace(BgCol, "0x", "")
+    BgCol:=SubStr(BgCol,3,6)
+    BgCol:=SubStr(BgCol,5,2) . SubStr(BgCol,3,2) . SubStr(BgCol,1,2)
+    SetFormat, Integer, %f%
+
+    ;Gui, Color, c%BgCol%
+    ;Gui, Show, w100 h100
+    return BgCol
+}
+
+getIconForExe(winid){
+	global makeTranslucent
+	global exeIcons
+	if(exeIcons.HasKey(winid))
+	{
+		return exeIcons[winid]
+	}
+	WinGet FileName, ProcessPath, % "ahk_id " winid
+	ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
+	hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
+	if(makeTranslucent){
+		pBitmapI :=Gdip_CreateBitmapFromHICON(hIcon)
+		hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
+		Gdip_DisposeImage(pBitmapI)
+		exeIcons[winid]:=hBitmapI
+	}
+	else
+	{
+		exeIcons[winid]:=hIcon
+	}
+	return exeIcons[winid]
 }
