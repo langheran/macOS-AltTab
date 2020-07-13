@@ -531,9 +531,13 @@ return
 	if(A_GuiEvent=="RightClick")
 	{
 		iconNumber:=StrReplace(A_GuiControl, "Icon")
-		prevWindowId:=hwnds[iconNumber]
-		WinClose, ahk_id %prevWindowId%
-		closeWindow:=1
+		if(iconNumber is number)
+		{
+			prevWindowId:=hwnds[iconNumber]
+			WinClose, ahk_id %prevWindowId%
+			WinWaitClose , ahk_id %prevWindowId%, , 1
+			closeWindow:=1
+		}
 	}
 return
 
