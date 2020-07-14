@@ -53,6 +53,9 @@ For Key, hBitmap in wsNoBorder{
 For Key, hBitmap in wsIcon{
 	DeleteObject(hBitmap)
 }
+For Key, hBitmap in exeIcons{
+	DeleteObject(hBitmap)
+}
 Gdip_Shutdown(pToken)
 return
 
