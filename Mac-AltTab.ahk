@@ -197,6 +197,7 @@ While((GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0) && !selec
 WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
 if(prevWindowId!="")
 {
+	DllCall("SwitchToThisWindow", "ptr", prevWindowId, "int", 1)
 	Loop, % 5
 	{
 		WinActivate, % "ahk_id " . prevWindowId
@@ -300,6 +301,7 @@ if(0)
 		WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
 		WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
 		SetWinDelay, -1
+		DllCall("SwitchToThisWindow", "ptr", prevWindowId, "int", 1)
 		Loop % 2 {
 			WinActivate, % "ahk_id " . active_id
 			WinActivate, % "ahk_id " . prevWindowId
@@ -317,6 +319,7 @@ if(0)
 		position:="Activate"
 		CalculateToolTipDisplayRight(position)
 		ToolTip, % position, % X+Width-tW-10 , %Y%
+		DllCall("SwitchToThisWindow", "ptr", active_id, "int", 1)
 		Loop % 4 {
 			WinActivate, % "ahk_id " . active_id
 			WinActivate, ahk_class tooltips_class32 ahk_exe %A_ScriptName%
@@ -493,6 +496,7 @@ ShowWindowPicker:
 	WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
 	if(prevWindowId!="" && !closeWindow)
 	{
+		DllCall("SwitchToThisWindow", "ptr", prevWindowId, "int", 1)
 		Loop, % 5
 		{
 			WinActivate, % "ahk_id " . prevWindowId
@@ -881,9 +885,9 @@ For Key, hBitmap in wsIcon{
 }
 if(Mod(A_TickCount, 30000)==0)
 {
-	; Reload
-	GoSub, CleanObjects
-	pToken := Gdip_Startup()
+	Reload
+	; GoSub, CleanObjects
+	; pToken := Gdip_Startup()
 }
 return
 
