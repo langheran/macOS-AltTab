@@ -52,6 +52,8 @@ GetSysImgLstIcon(Path, Size := "SYSSMALL", Overlay := "") {
    If DllCall("Shell32.dll\SHGetImageList", "Int", SHIL[Size], "Ptr", &IID_IIL, "PtrP", IIL, "UInt")
       Return False
    Flags := 0x0020 ; ILD_IMAGE
+   Flags |= 0x1000
+   Flags |= 0x0001
    ; overlays need a special handling
    If SHGIOI.HasKey(Overlay)
    && (IOV := DllCall("Shell32.dll\SHGetIconOverlayIndex", "Ptr", 0, "UInt", SHGIOI[Overlay], "Int")) >= 0

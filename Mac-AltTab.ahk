@@ -114,7 +114,7 @@ Loop % IdListCount{
 	{
 		Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
 		myIcon:=myIcon%i%
-		hIcon:=getIconForExe(IdList[A_Index])
+		hIcon:=getIconForExe(IdList[A_Index],,true)
 		SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 	} 
 	else
@@ -129,11 +129,11 @@ Loop % IdListCount{
 		if(icon_size==32){
 			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
 			myIcon:=myIcon%i%
-			SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size))
+			SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size, false))
 		} else {
 			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
 			myIcon:=myIcon%i%
-			hIcon:=getIconForExe(IdList[A_Index], icon_size)
+			hIcon:=getIconForExe(IdList[A_Index], icon_size, true)
 			SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 		}
 	}
@@ -1048,7 +1048,7 @@ getAccentColor(){
     return BgCol
 }
 
-getIconForExe(winid, icon_size=32){
+getIconForExe(winid, icon_size=32, useHIcon=0){
 	global makeTranslucent
 	global exeIcons
 	if(exeIcons.HasKey(winid))
@@ -1063,9 +1063,8 @@ getIconForExe(winid, icon_size=32){
 		SHIL := {LARGE: 0x00, SMALL: 0x01, EXTRALARGE: 0x02, SYSSMALL: 0x03, JUMBO: 0x04}
 		Icon := GetSysImgLstIcon(FileName, "JUMBO")
 		hIcon := Icon.HICON
-		exeIcons[winid]:=hIcon
 	}
-	if(makeTranslucent && icon_size==32){
+	if(!useHIcon){
 		pBitmapI :=Gdip_CreateBitmapFromHICON(hIcon)
 		icon_size:=icon_size*(A_ScreenDPI/96)
 		w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
