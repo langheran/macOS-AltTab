@@ -126,7 +126,6 @@ Loop % IdListCount{
 		SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
 		GuiControl, Hide,    % myIconBackground
-
 		if(icon_size==32){
 			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
 			myIcon:=myIcon%i%
