@@ -5,6 +5,7 @@
 #InstallKeybdHook
 #WinActivateForce
 
+#Include, GetSysImgLstIcon.ahk
 #Include, Gdip_All.ahk
 pToken := Gdip_Startup()
 wsBorder:={}
@@ -118,14 +119,24 @@ Loop % IdListCount{
 	} 
 	else
 	{
-		Gui, 2: Add, Picture, w42 h42 x+%sep% y20 gSelectWindow hwndmyIconBackground%i%  +0xE
+		; icon_size:=32
+		icon_size:=256/(A_ScreenDPI/96)
+		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x+" . sep . " y20 gSelectWindow hwndmyIconBackground" . i . "  +0xE"
 		myIconBackground:=myIconBackground%i%
-		SetTitleFrameText(42*(A_ScreenDPI/96),42*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
+		SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
 		GuiControl, Hide,    % myIconBackground
-		Gui, 2: Add, Picture, w32 h32 xp+5 yp+5 gSelectWindow BackgroundTrans vIcon%i% hwndmyIcon%i%  +0xE
-		myIcon:=myIcon%i%
-		SetImage(myIcon, getIconForExe(IdList[A_Index]))
+
+		if(icon_size==32){
+			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
+			myIcon:=myIcon%i%
+			SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size))
+		} else {
+			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
+			myIcon:=myIcon%i%
+			hIcon:=getIconForExe(IdList[A_Index], icon_size)
+			SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+		}
 	}
 	DeleteObject(hIcon)
 }
@@ -1038,7 +1049,7 @@ getAccentColor(){
     return BgCol
 }
 
-getIconForExe(winid){
+getIconForExe(winid, icon_size=32){
 	global makeTranslucent
 	global exeIcons
 	if(exeIcons.HasKey(winid))
@@ -1046,10 +1057,20 @@ getIconForExe(winid){
 		return exeIcons[winid]
 	}
 	WinGet FileName, ProcessPath, % "ahk_id " winid
-	ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
-	hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
-	if(makeTranslucent){
+	if(icon_size==32) {
+		ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
+		hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A"), ptr, DllCall("GetModuleHandle", ptr, 0, ptr), str, FileName, "ushort*", lpiIcon, ptr)   ;only supports 32x32
+	} else {
+		SHIL := {LARGE: 0x00, SMALL: 0x01, EXTRALARGE: 0x02, SYSSMALL: 0x03, JUMBO: 0x04}
+		Icon := GetSysImgLstIcon(FileName, "JUMBO")
+		hIcon := Icon.HICON
+		exeIcons[winid]:=hIcon
+	}
+	if(makeTranslucent && icon_size==32){
 		pBitmapI :=Gdip_CreateBitmapFromHICON(hIcon)
+		icon_size:=icon_size*(A_ScreenDPI/96)
+		w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
+		pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, icon_size, icon_size, 0)
 		hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 		Gdip_DisposeImage(pBitmapI)
 		exeIcons[winid]:=hBitmapI
