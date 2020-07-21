@@ -121,7 +121,7 @@ Loop % IdListCount{
 	{
 		; icon_size:=32
 		icon_size:=256/(A_ScreenDPI/96)
-		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x+" . sep . " y20 gSelectWindow hwndmyIconBackground" . i . "  +0xE"
+		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x+" . sep . " y20 gSelectWindow vIconBackground" . i . " hwndmyIconBackground" . i . "  +0xE"
 		myIconBackground:=myIconBackground%i%
 		SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
@@ -540,6 +540,7 @@ return
 
 SelectWindow:
 	iconNumber:=StrReplace(A_GuiControl, "Icon")
+	iconNumber:=StrReplace(iconNumber, "Background")
 	prevWindowId:=hwnds[iconNumber]
 	selectWindow:=1
 return
