@@ -21,7 +21,7 @@ WS_BORDER := 0x00800000
 ACCENT_COLOR:="0xff" . getAccentColor() ; 0xff721CAA
 OnExit Exit
 SetTimer, RefreshWS, 30000
-
+SetTimer, CleanAll, 300000
 #Include RunAsTask.ahk
 RunAsTask()
 OnMessage(0x404, "AHK_NOTIFYICON")
@@ -893,13 +893,14 @@ For Key, hBitmap in wsIcon{
 		}
 	}
 }
-if(Mod(A_TickCount, 30000)==0)
-{
-	Reload
-	; GoSub, CleanObjects
-	; pToken := Gdip_Startup()
-}
 return
+
+CleanAll:
+Reload
+; GoSub, CleanObjects
+; pToken := Gdip_Startup()
+return
+
 
 Get_Window_Icon(wid, Use_Large_Icons_Current=1) ; (window id, whether to get large icons)
 {
