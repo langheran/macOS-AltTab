@@ -1068,7 +1068,10 @@ getIconForExe(winid, icon_size=32, useHIcon=0){
 		Icon := GetSysImgLstIcon(FileName, "JUMBO")
 		hIcon := Icon.HICON
 		SplitPath, FileName, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
-		iconPath := A_ScriptDir . "/icons/" . OutNameNoExt . ".ico"
+		iconsDir:=A_ScriptDir . "/icons"
+		if(!FileExist(iconsDir))
+			FileCreateDir, %iconsDir%
+		iconPath := iconsDir . "/" . OutNameNoExt . ".ico"
 		if(!FileExist(iconPath))
 			SaveHICONtoFile( hicon, iconPath)
 	}
