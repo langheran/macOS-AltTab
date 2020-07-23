@@ -15,11 +15,16 @@ wsTitle:={}
 lastWS:={}
 exeIcons:={}
 hwnds:={}
-bgrColor := "111111"
+bgrColor:= "222222"
+translucentColor:=  "4C2A66"
+brgTransparency := 100
+; "111111" "111111" 9
+; "222222" "4C2A66" 100
 makeTranslucent:=1
 WS_BORDER := 0x00800000
-ACCENT_COLOR:="0xff" . getAccentColor() ; 0xff721CAA
-ACCENT_COLOR_ALPHA:= "0x80" . getAccentColor()
+ACCENT_COLOR_ORIGINAL:= getAccentColor()
+ACCENT_COLOR:="0xff" . ACCENT_COLOR_ORIGINAL ; 0xff721CAA
+ACCENT_COLOR_ALPHA:= "0x80" . ACCENT_COLOR_ORIGINAL
 OnExit Exit
 SetTimer, RefreshWS, 30000
 SetTimer, CleanAll, 300000
@@ -147,7 +152,7 @@ if(!makeTranslucent)
 else
 {
 	Gui, 2: Color, c%bgrColor%
-	SetAcrylicGlassEffect(bgrColor, 9, hGui)
+	SetAcrylicGlassEffect(translucentColor, brgTransparency, hGui)
 }
 GoSub, ShowWindow
 count:=0
@@ -423,7 +428,7 @@ ShowWindowPicker:
 		gwidth1:=Ceil(gwidth*(A_ScreenDPI/96))
 		gheight1:=Ceil(gheight*(A_ScreenDPI/96))
 		Gui, 2: Color, c%bgrColor%
-		SetAcrylicGlassEffect(bgrColor, 9, hGui)
+		SetAcrylicGlassEffect(translucentColor, brgTransparency, hGui)
 	}
 	;SetTimer, ShowWindow, -200
 	GoSub, ShowWindow
