@@ -1,6 +1,8 @@
 #NoEnv
-#HotkeyInterval 1000
-#MaxHotkeysPerInterval 800
+#HotkeyInterval 100
+#MaxHotkeysPerInterval 1
+#MaxThreadsPerHotkey 1
+#MaxThreads 2
 #KeyHistory 0
 #InstallKeybdHook
 #WinActivateForce
@@ -16,10 +18,11 @@ lastWS:={}
 exeIcons:={}
 hwnds:={}
 bgrColor:= "222222"
-translucentColor:=  "4C2A66"
+translucentColor:=  "352060"
 brgTransparency := 100
 ; "111111" "111111" 9
 ; "222222" "4C2A66" 100
+; "222222" "352060" 100
 makeTranslucent:=1
 WS_BORDER := 0x00800000
 ACCENT_COLOR_ORIGINAL:= getAccentColor()
