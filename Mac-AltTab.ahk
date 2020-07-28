@@ -1,25 +1,25 @@
 #NoEnv
-#HotkeyInterval 100
-#MaxHotkeysPerInterval 1
-#MaxThreadsPerHotkey 1
-#MaxThreads 2
+; #HotkeyInterval 100
+; #MaxHotkeysPerInterval 1
+; #MaxThreadsPerHotkey 1
+; #MaxThreads 10
 #KeyHistory 0
 #InstallKeybdHook
-#WinActivateForce
+; #WinActivateForce
 
 #Include, GetSysImgLstIcon.ahk
 #Include, Gdip_All.ahk
 pToken := Gdip_Startup()
 wsBorder:={}
 wsNoBorder:={}
-wsIcon:={}
 wsTitle:={}
 lastWS:={}
 exeIcons:={}
 hwnds:={}
 bgrColor:= "222222"
-translucentColor:=  "352060"
+translucentColor:=  "110011"
 brgTransparency := 100
+icon_size:=213/(A_ScreenDPI/96)
 ; "111111" "111111" 9
 ; "222222" "4C2A66" 100
 ; "222222" "352060" 100
@@ -30,7 +30,7 @@ ACCENT_COLOR:="0xff" . ACCENT_COLOR_ORIGINAL ; 0xff721CAA
 ACCENT_COLOR_ALPHA:= "0x80" . ACCENT_COLOR_ORIGINAL
 OnExit Exit
 SetTimer, RefreshWS, 30000
-SetTimer, CleanAll, 300000
+; SetTimer, CleanAll, 300000
 #Include RunAsTask.ahk
 RunAsTask()
 OnMessage(0x404, "AHK_NOTIFYICON")
@@ -51,20 +51,47 @@ SendMode Input
 
 #Include switchDesktop.ahk
 
+SetTimer, MonitorTitles, 1000
+SetTimer, ImagesInit, -1
+
+return
+
+MonitorTitles:
+if(WinExist("ahk_id " . guid_id))
+	return
+For Key, oldTitle in wsTitle
+{
+	WinGetTitle, windowTitle, % "ahk_id " . Key
+	if(windowTitle!=oldTitle)
+	{
+		CleanObject(Key)
+	}
+}
+GoSub, ImagesInit
+return
+
+ImagesInit:
+IdListExe:=WinsGetProcesses(0)
+IdListCountExe:=IdListExe._MaxIndex()
+Loop % IdListCountExe{
+	getIconForExe(IdListExe[A_Index], icon_size, false)
+	WinGet, exename, ProcessName,% "ahk_id " . IdListExe[A_Index]
+	IdList:=WinsGetWindows(exename,0)
+	IdListCount:=IdList._MaxIndex()
+	Loop % IdListCount {
+		getWsNoBorder(IdList[A_Index])
+	}
+}
 return
 
 CleanObjects:
-For Key, hBitmap in wsBorder{
-	DeleteObject(hBitmap)
-}
-For Key, hBitmap in wsNoBorder{
-	DeleteObject(hBitmap)
-}
-For Key, hBitmap in wsIcon{
-	DeleteObject(hBitmap)
+For Key, oldTitle in wsTitle
+{
+	CleanObject(Key)
 }
 For Key, hBitmap in exeIcons{
 	DeleteObject(hBitmap)
+	exeIcons.Delete(Key)
 }
 Gdip_Shutdown(pToken)
 return
@@ -98,6 +125,9 @@ return InStr(name, "SearchUI.exe")
 }
 
 !Tab::
+; SetTimer, AltTab, -1
+; return
+AltTab:
 WinGet, active_id, ID, A
 if(!active_id)
 {
@@ -105,7 +135,7 @@ if(!active_id)
 	WinActivate, "ahk_id " . IdList[1]
 }
 WinGet, refresh_id, ID, A
-SetTimer, RefreshWin, -10
+; SetTimer, RefreshWin, -10
 GoSub, CloseStartMenu
 WinGet, exename, ProcessName,A
 IdList:=WinsGetProcesses(0)
@@ -116,37 +146,34 @@ Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
 	i:=A_Index
 	hwnds[A_Index]:=IdList[A_Index]
-	sep:=10
-	if(i==1)
-		sep:=0
+	sep:=20+Mod(i-1,7)*(icon_size+20)
+	line:=(Floor((i-1)/7))
+	y:=20+(icon_size+20)*line
 	if(!makeTranslucent)
 	{
-		Gui, 2:  Add, Text, w32 h32 x+%sep% y20 gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
+		Gui, 2:  Add, Text, w32 h32 x+%sep% y%y% gSelectWindow vIcon%i% hwndmyIcon%i% 0x3 ; 0x3 = SS_ICON
 		myIcon:=myIcon%i%
 		hIcon:=getIconForExe(IdList[A_Index],,true)
 		SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
-	} 
+	}
 	else
 	{
-		; icon_size:=32
-		icon_size:=256/(A_ScreenDPI/96)
-		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x+" . sep . " y20 gSelectWindow vIconBackground" . i . " hwndmyIconBackground" . i . "  +0xE"
+		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x" . sep . " y" . y . " gSelectWindow vIconBackground" . i . " hwndmyIconBackground" . i . "  +0xE"
 		myIconBackground:=myIconBackground%i%
 		SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
 		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
 		GuiControl, Hide,    % myIconBackground
 		if(icon_size==32 || 1){
-			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
+			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
 			myIcon:=myIcon%i%
 			SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size, false))
 		} else {
-			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " xp+5 yp+5 gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
+			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
 			myIcon:=myIcon%i%
 			hIcon:=getIconForExe(IdList[A_Index], icon_size, true)
 			SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
 		}
 	}
-	DeleteObject(hIcon)
 }
 if(!makeTranslucent)
 {
@@ -250,112 +277,112 @@ return
 #If
 
 #Tab::
-if(0)
-{
-	GoSub, CloseStartMenu
-	CoordMode, Tooltip, Screen
-	WinGet, exename, ProcessName,A
-	WinGet, active_id, ID, A
-	IdList:=WinsGetWindows(exename,0)
-	count:=0
-	IdListCount:=IdList._MaxIndex()
-	AlwaysOnTopArray:=[]
+; if(0)
+; {
+; 	GoSub, CloseStartMenu
+; 	CoordMode, Tooltip, Screen
+; 	WinGet, exename, ProcessName,A
+; 	WinGet, active_id, ID, A
+; 	IdList:=WinsGetWindows(exename,0)
+; 	count:=0
+; 	IdListCount:=IdList._MaxIndex()
+; 	AlwaysOnTopArray:=[]
 	
-	Loop % IdListCount {
-		WinGet, ExStyle, ExStyle, % "ahk_id " IdList[A_Index]
-		If (ExStyle & 0x8)
-			AlwaysOnTop:= 1
-		Else
-			AlwaysOnTop:= 0
-		AlwaysOnTopArray.Insert(AlwaysOnTop)
-	}
+; 	Loop % IdListCount {
+; 		WinGet, ExStyle, ExStyle, % "ahk_id " IdList[A_Index]
+; 		If (ExStyle & 0x8)
+; 			AlwaysOnTop:= 1
+; 		Else
+; 			AlwaysOnTop:= 0
+; 		AlwaysOnTopArray.Insert(AlwaysOnTop)
+; 	}
 
-	Loop % IdListCount {
-		WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
-	}
-	prevWindowId:=0
-	close_exename:=""
-	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
-	{
-		if (GetKeyState("Tab", "P") || count=0)
-		{
-			if(prevWindowId)
-				WinSet, AlwaysOnTop, Off, % "ahk_id " . prevWindowId
-			shiftPressed := GetKeyState("Shift")
-			count:=count+1-2*shiftPressed
-			if(count<0)
-				count:=IdList._MaxIndex()
-			i:=Abs(Mod(count,IdListCount))+1
-			prevWindowId:=IdList[i]
-			WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
-			WinGetTitle, Title, % "ahk_id " . prevWindowId
-			WinGetPos, X, Y, Width, Height, % "ahk_id " . prevWindowId
-			position:= "" . i . "/" .  IdList._MaxIndex()
-			CalculateToolTipDisplayRight(position)
-			ToolTip, % position, % X+Width-tW-10 , %Y%
-			SetTimer, RemoveToolTip, -5000
-			WinGet MX, MinMax, % "ahk_id " . prevWindowId
-			If (MX==-1)
-				WinRestore, % "ahk_id " . prevWindowId
-			KeyWait Tab
-			; WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[Mod(count,IdListCount)+1]
-		}
-		if GetKeyState("Backspace", "P")
-		{
-			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
-			break
-		}
-		if (GetKeyState("Esc"))
-		{
-			prevWindowId:=""
-			break
-		}
-	}
-	GoSub, RemoveToolTip
-	if(prevWindowId)
-	{
-		Loop % IdListCount {
-			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
-		}
-		WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
-		WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
-		SetWinDelay, -1
-		DllCall("SwitchToThisWindow", "ptr", prevWindowId, "int", 1)
-		Loop % 2 {
-			WinActivate, % "ahk_id " . active_id
-			WinActivate, % "ahk_id " . prevWindowId
-		}
-	}
-	Loop % IdListCount {
-		if(AlwaysOnTopArray[A_Index]==1)
-			WinSet, AlwaysOnTop, On, % "ahk_id " . IdList[A_Index]
-		else
-			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
-	}
-	if(!prevWindowId)
-	{
-		WinGetPos, X, Y, Width, Height, % "ahk_id " . active_id
-		position:="Activate"
-		CalculateToolTipDisplayRight(position)
-		ToolTip, % position, % X+Width-tW-10 , %Y%
-		DllCall("SwitchToThisWindow", "ptr", active_id, "int", 1)
-		Loop % 4 {
-			WinActivate, % "ahk_id " . active_id
-			WinActivate, ahk_class tooltips_class32 ahk_exe %A_ScriptName%
-		}
-		GoSub, RemoveToolTip
-	}
-	if(close_exename)
-	{
-		MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
-		IfMsgBox, Yes
-		{
-			GoSub, CloseExeByName
-		}
-	}
-}
-else
-{
+; 	Loop % IdListCount {
+; 		WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
+; 	}
+; 	prevWindowId:=0
+; 	close_exename:=""
+; 	While(GetKeyState("Alt", "P") || GetKeyState("LWin", "P") || count=0)
+; 	{
+; 		if (GetKeyState("Tab", "P") || count=0)
+; 		{
+; 			if(prevWindowId)
+; 				WinSet, AlwaysOnTop, Off, % "ahk_id " . prevWindowId
+; 			shiftPressed := GetKeyState("Shift")
+; 			count:=count+1-2*shiftPressed
+; 			if(count<0)
+; 				count:=IdList._MaxIndex()
+; 			i:=Abs(Mod(count,IdListCount))+1
+; 			prevWindowId:=IdList[i]
+; 			WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
+; 			WinGetTitle, Title, % "ahk_id " . prevWindowId
+; 			WinGetPos, X, Y, Width, Height, % "ahk_id " . prevWindowId
+; 			position:= "" . i . "/" .  IdList._MaxIndex()
+; 			CalculateToolTipDisplayRight(position)
+; 			ToolTip, % position, % X+Width-tW-10 , %Y%
+; 			SetTimer, RemoveToolTip, -5000
+; 			WinGet MX, MinMax, % "ahk_id " . prevWindowId
+; 			If (MX==-1)
+; 				WinRestore, % "ahk_id " . prevWindowId
+; 			KeyWait Tab
+; 			; WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[Mod(count,IdListCount)+1]
+; 		}
+; 		if GetKeyState("Backspace", "P")
+; 		{
+; 			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
+; 			break
+; 		}
+; 		if (GetKeyState("Esc"))
+; 		{
+; 			prevWindowId:=""
+; 			break
+; 		}
+; 	}
+; 	GoSub, RemoveToolTip
+; 	if(prevWindowId)
+; 	{
+; 		Loop % IdListCount {
+; 			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
+; 		}
+; 		WinSet, AlwaysOnTop, Off, % "ahk_id " . active_id
+; 		WinSet, AlwaysOnTop, On, % "ahk_id " . prevWindowId
+; 		SetWinDelay, -1
+; 		DllCall("SwitchToThisWindow", "ptr", prevWindowId, "int", 1)
+; 		Loop % 2 {
+; 			WinActivate, % "ahk_id " . active_id
+; 			WinActivate, % "ahk_id " . prevWindowId
+; 		}
+; 	}
+; 	Loop % IdListCount {
+; 		if(AlwaysOnTopArray[A_Index]==1)
+; 			WinSet, AlwaysOnTop, On, % "ahk_id " . IdList[A_Index]
+; 		else
+; 			WinSet, AlwaysOnTop, Off, % "ahk_id " . IdList[A_Index]
+; 	}
+; 	if(!prevWindowId)
+; 	{
+; 		WinGetPos, X, Y, Width, Height, % "ahk_id " . active_id
+; 		position:="Activate"
+; 		CalculateToolTipDisplayRight(position)
+; 		ToolTip, % position, % X+Width-tW-10 , %Y%
+; 		DllCall("SwitchToThisWindow", "ptr", active_id, "int", 1)
+; 		Loop % 4 {
+; 			WinActivate, % "ahk_id " . active_id
+; 			WinActivate, ahk_class tooltips_class32 ahk_exe %A_ScriptName%
+; 		}
+; 		GoSub, RemoveToolTip
+; 	}
+; 	if(close_exename)
+; 	{
+; 		MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
+; 		IfMsgBox, Yes
+; 		{
+; 			GoSub, CloseExeByName
+; 		}
+; 	}
+; }
+; else
+; {
 	WinGet, active_id, ID, A
 	if(!active_id)
 	{
@@ -363,8 +390,8 @@ else
 		WinActivate, "ahk_id " . IdList[1]
 	}
 	WinGet, refresh_id, ID, A
-	SetTimer, RefreshWin, -10
-	GoSub, CloseStartMenu
+	; SetTimer, RefreshWin, -10
+	; SetTimer, CloseStartMenu, -10
 	CoordMode, Tooltip, Screen
 	WinGet, new_exename, ProcessName,A
 	if(new_exename)
@@ -384,7 +411,7 @@ else
 	; 	}
 	; }
 	GoSub, ShowWindowPicker
-}
+; }
 return
 
 ShowWindowPicker:
@@ -403,13 +430,11 @@ ShowWindowPicker:
 		y:=20+240*line
 		y2:=153+240*line-5
 		Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
-		Gui 2:Add, Picture, % "xp+6 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
+		; Gui 2:Add, Picture, % "xp+6 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
-		icon := ThumbIcon%i%
 		sourceWin:=IdList[A_Index]
 		hwnds[A_Index]:=sourceWin
 		SetImage(image, getWsNoBorder(sourceWin))
-		SetImage(icon, getWsIcon(sourceWin))
 	}
 	y:=20+240*(line+1)+10
 	gwidth := Min(IdListCount,5)*230+(Min(IdListCount,5)-1)*10
@@ -448,11 +473,9 @@ ShowWindowPicker:
 			; SetTimer, RefreshWin, -1
 			if(count)
 			{
-				GuiControl, -Redraw,    % myIcon
+				WinSet, Style, -Redraw, ahk_id %myIcon%
 				SetImage(myIcon, getWsNoBorder(prevWindowId))
-				GuiControl, +Redraw,    % myIcon
-				GuiControl, +Redraw,    % ThumbIcon
-				WinSet, Style, -%WS_BORDER%, ahk_id %myIcon%
+				WinSet, Style, +Redraw, ahk_id %myIcon%
 			}
 
 			shiftPressed := GetKeyState("Shift")
@@ -464,8 +487,9 @@ ShowWindowPicker:
 			myIconBorder:=myIconBorder%i%
 			ThumbIcon:=ThumbIcon%i%
 
-			GuiControl, -Redraw,    % myIcon
+			WinSet, Style, -Redraw, ahk_id %myIcon%
 			SetImage(myIcon, getWsBorder(IdList[i]))
+			WinSet, Style, +Redraw, ahk_id %myIcon%
 			if(!makeTranslucent)
 			{
 				GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
@@ -474,10 +498,7 @@ ShowWindowPicker:
 			{
 				SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
 			}
-			GuiControl, +Redraw,    % TextBackground
-			GuiControl, +Redraw,    % myIcon
-			GuiControl, +Redraw,    % ThumbIcon
-			WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+			; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 
 			prevWindowId:=IdList[i]
 			KeyWait Tab
@@ -531,6 +552,8 @@ ShowWindowPicker:
 return
 
 ShowWindow:
+; y_pos := A_ScreenHeight/2-120
+; Gui, 2:  Show, y%y_pos% NoActivate 
 Gui, 2:  Show, NoActivate 
 if(A_ThisHotkey=="#Tab" && (!IdListCount || IdListCount>=min_win_width)) ; Last border correction
 {
@@ -742,12 +765,12 @@ CopyWinImgToCache(SourceWin,DstWidth, DstHeight)
 global Bord
 global wsBorder
 global wsNoBorder
-global wsIcon
+global wsTitle
 global lastWS
 global ACCENT_COLOR
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
-Title:=limittext(Title)
+wsTitle[SourceWin]:=Title
 
 lastWS[SourceWin]:=A_TickCount
 
@@ -759,8 +782,6 @@ w1 := Gdip_GetImageWidth(pBitmapI), h1 := Gdip_GetImageHeight(pBitmapI)
 pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, 128, 128, 0)
 hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 
-wsIcon[SourceWin]:=hBitmapI
-
 pBitmap := 	Gdip_BitmapFromHWNDStretchToDst(SourceWin,DstWidth,DstHeight)
 pBitmapB := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 GB := Gdip_GraphicsFromImage(pBitmapB)
@@ -768,30 +789,30 @@ pBrush := Gdip_BrushCreateSolid(ACCENT_COLOR)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(GB, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+Gdip_DrawImage(GB, pBitmapI, Bord/2, DstHeight-(128-Bord/2), 128, 128, 0, 0, 128, 128)
 pBrush := Gdip_BrushCreateSolid(ACCENT_COLOR)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
 Font := "SF Pro Display"
-Gdip_TextToGraphics(GB, Title, Options, Font, DstWidth-Bord, 30)
+Gdip_TextToGraphics(GB, limittext(Title), Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 
 wsBorder[SourceWin]:=hBitmapB
 
-DstWidth:=DstWidth-2
-DstHeight:=DstHeight-2
 pBitmapW := Gdip_CreateBitmap(DstWidth+Bord, DstHeight+Bord)
 G := Gdip_GraphicsFromImage(pBitmapW)
 pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, DstHeight+Bord)
 Gdip_DeleteBrush(pBrush)
 Gdip_DrawImage(G, pBitmap, Bord/2, Bord/2, DstWidth, DstHeight, 0, 0, DstWidth, DstHeight)
+Gdip_DrawImage(G, pBitmapI, Bord/2, DstHeight-(128-Bord/2), 128, 128, 0, 0, 128, 128)
 pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold c99ffffff"
 Font := "SF Pro Display"
-Gdip_TextToGraphics(G, Title, Options, Font, DstWidth-Bord, 30)
+Gdip_TextToGraphics(G, limittext(Title), Options, Font, DstWidth-Bord, 30)
 
 hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
 
@@ -799,7 +820,7 @@ wsNoBorder[SourceWin]:=hBitmap
 
 Gdip_DeleteGraphics(G)
 Gdip_DeleteGraphics(GB)
-
+DeleteObject(hBitmapI)
 Gdip_DisposeImage(pBitmap)
 Gdip_DisposeImage(pBitmapB)
 Gdip_DisposeImage(pBitmapW)
@@ -838,9 +859,7 @@ getWsTitle(sourceWin){
 
 	if(wsTitle.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsTitle[sourceWin]
-	WinGetTitle, title, % "ahk_id " . sourceWin
-	wsTitle[sourceWin]:=title
-	lastWS[sourceWin]:=A_TickCount
+	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsTitle[sourceWin]
 }
 
@@ -848,7 +867,7 @@ getWsBorder(sourceWin){
 	global wsBorder
 	global lastWS
 
-	if(wsBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+	if(wsBorder.HasKey(sourceWin)) ; && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsBorder[sourceWin]
 	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsBorder[sourceWin]
@@ -858,20 +877,10 @@ getWsNoBorder(sourceWin){
 	global wsNoBorder
 	global lastWS
 
-	if(wsNoBorder.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+	if(wsNoBorder.HasKey(sourceWin)) ; && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsNoBorder[sourceWin]
 	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsNoBorder[sourceWin]
-}
-
-getWsIcon(sourceWin){
-	global wsIcon
-	global lastWS
-
-	if(wsIcon.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
-		return wsIcon[sourceWin]
-	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
-	return wsIcon[sourceWin]
 }
 
 RefreshWin:
@@ -881,29 +890,28 @@ return
 RefreshWS:
 if(WinExist("ahk_id " . guid_id))
 	return
-For Key, hBitmap in wsIcon{
-	if(!WinExist("ahk_id " . Key)){
-		DeleteObject(wsIcon[Key])
-		DeleteObject(wsNoBorder[Key])
-		DeleteObject(wsBorder[Key])
-		DeleteObject(exeIcons[Key])
-		wsIcon.Delete(Key)
-		wsNoBorder.Delete(Key)
-		wsBorder.Delete(Key)
-		exeIcons.Delete(Key)
-		wsTitle.Delete(Key)
-	}
-	else
+For Key, hBitmap in wsNoBorder
+{
+	if(!WinActive("ahk_id " . Key))
 	{
-		if(!WinActive("ahk_id " . Key)){
-			WinGetTitle, title, % "ahk_id " . sourceWin
-			wsTitle[sourceWin]:=title
-			CopyWinImgToCache(Key, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
-			lastWS[sourceWin]:=A_TickCount
-		}
+			CleanObject(Key)
 	}
 }
+SetTimer, ImagesInit, -1
 return
+
+CleanObject(Key)
+{
+	global wsNoBorder
+	global wsBorder
+	global wsTitle
+
+	DeleteObject(wsNoBorder[Key])
+	DeleteObject(wsBorder[Key])
+	wsNoBorder.Delete(Key)
+	wsBorder.Delete(Key)
+	wsTitle.Delete(Key)
+}
 
 CleanAll:
 Reload
@@ -1062,11 +1070,11 @@ getAccentColor(){
 getIconForExe(winid, icon_size=32, useHIcon=0){
 	global makeTranslucent
 	global exeIcons
-	if(exeIcons.HasKey(winid))
-	{
-		return exeIcons[winid]
-	}
 	WinGet FileName, ProcessPath, % "ahk_id " winid
+	if(exeIcons.HasKey(FileName))
+	{
+		return exeIcons[FileName]
+	}
 	iconPath := 0
 	if(icon_size==32) {
 		ptr := A_PtrSize =8 ? "ptr" : "uint"   ;for AHK Basic
@@ -1093,13 +1101,13 @@ getIconForExe(winid, icon_size=32, useHIcon=0){
 		pBitmapI := Gdip_ResizepBitmap(pBitmapI, w1, h1, icon_size, icon_size, 0)
 		hBitmapI := Gdip_CreateHBITMAPFromBitmap(pBitmapI)
 		Gdip_DisposeImage(pBitmapI)
-		exeIcons[winid]:=hBitmapI
+		exeIcons[FileName]:=hBitmapI
 	}
 	else
 	{
-		exeIcons[winid]:=hIcon
+		exeIcons[FileName]:=hIcon
 	}
-	return exeIcons[winid]
+	return exeIcons[FileName]
 }
 
 SaveHICONtoFile( hicon, iconFile ) {                                ; By SKAN | 06-Sep-2017 | goo.gl/8NqmgJ
