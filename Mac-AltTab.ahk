@@ -158,20 +158,25 @@ Loop % IdListCount{
 	}
 	else
 	{
-		Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x" . sep . " y" . y . " gSelectWindow vIconBackground" . i . " hwndmyIconBackground" . i . "  +0xE"
-		myIconBackground:=myIconBackground%i%
-		SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
-		WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
-		GuiControl, Hide,    % myIconBackground
-		if(icon_size==32 || 1){
-			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
-			myIcon:=myIcon%i%
-			SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size, false))
-		} else {
-			Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
-			myIcon:=myIcon%i%
-			hIcon:=getIconForExe(IdList[A_Index], icon_size, true)
-			SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+		try
+		{
+			Gui, 2: Add, Picture, % "w" . (icon_size+10) .  " h" . (icon_size+10) .  " x" . sep . " y" . y . " gSelectWindow vIconBackground" . i . " hwndmyIconBackground" . i . "  +0xE"
+			myIconBackground:=myIconBackground%i%
+			SetTitleFrameText((icon_size+10)*(A_ScreenDPI/96),(icon_size+10)*(A_ScreenDPI/96),ACCENT_COLOR,"", myIconBackground)
+			WinSet, Style, +%WS_BORDER%, ahk_id %myIconBackground%
+			GuiControl, Hide,    % myIconBackground
+			if(icon_size==32 || 1){
+				Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  +0xE"
+				myIcon:=myIcon%i%
+				SetImage(myIcon, getIconForExe(IdList[A_Index], icon_size, false))
+			} else {
+				Gui, 2: Add, Picture, % "w" . icon_size .  " h" . icon_size .  " x" . (sep+5) . " y" . (y+5) . " gSelectWindow BackgroundTrans vIcon" . i . " hwndmyIcon" . i . "  0x3"
+				myIcon:=myIcon%i%
+				hIcon:=getIconForExe(IdList[A_Index], icon_size, true)
+				SendMessage, STM_SETICON := 0x0170, hIcon, 0,, Ahk_ID %myIcon%
+			}
+		}catch e {
+			return
 		}
 	}
 }
@@ -429,7 +434,12 @@ ShowWindowPicker:
 		line:=(Floor((i-1)/5))
 		y:=20+240*line
 		y2:=153+240*line-5
-		Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
+		try
+		{
+			Gui 2:Add, Picture, % "x" . sep . " y" . y . " w230 h230 gSelectWindow vIcon" . i . " hwndmyIcon" . i . " +0xE"
+		}catch e {
+			return
+		}
 		; Gui 2:Add, Picture, % "xp+6 y" . y2 . " w128 h30 BackgroundTrans hwndThumbIcon" . i . " +0xE" ; 203
 		image := myIcon%i%
 		sourceWin:=IdList[A_Index]
