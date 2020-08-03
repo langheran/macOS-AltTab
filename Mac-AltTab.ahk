@@ -13,6 +13,7 @@ pToken := Gdip_Startup()
 wsBorder:={}
 wsNoBorder:={}
 wsTitle:={}
+wsMinMax:={}
 lastWS:={}
 exeIcons:={}
 hwnds:={}
@@ -62,7 +63,8 @@ if(WinExist("ahk_id " . guid_id))
 For Key, oldTitle in wsTitle
 {
 	WinGetTitle, windowTitle, % "ahk_id " . Key
-	if(windowTitle!=oldTitle)
+	WinGet MX, MinMax, % "ahk_id " . Key
+	if(windowTitle!=oldTitle || wsMinMax[Key]!=MX)
 	{
 		CleanObject(Key)
 	}
@@ -777,10 +779,14 @@ global wsBorder
 global wsNoBorder
 global wsTitle
 global lastWS
+global wsMinMax
 global ACCENT_COLOR
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
 wsTitle[SourceWin]:=Title
+
+WinGet MX, MinMax, % "ahk_id " . SourceWin
+wsMinMax[SourceWin]:=MX
 
 lastWS[SourceWin]:=A_TickCount
 
@@ -915,12 +921,14 @@ CleanObject(Key)
 	global wsNoBorder
 	global wsBorder
 	global wsTitle
+	global wsMinMax
 
 	DeleteObject(wsNoBorder[Key])
 	DeleteObject(wsBorder[Key])
 	wsNoBorder.Delete(Key)
 	wsBorder.Delete(Key)
 	wsTitle.Delete(Key)
+	wsMinMax.Delete(Key)
 }
 
 CleanAll:
