@@ -60,12 +60,14 @@ return
 MonitorTitles:
 if(WinExist("ahk_id " . guid_id))
 	return
+MonitorTitles0:
 For Key, oldTitle in wsTitle
 {
 	WinGetTitle, windowTitle, % "ahk_id " . Key
 	WinGet MX, MinMax, % "ahk_id " . Key
 	if(windowTitle!=oldTitle || wsMinMax[Key]!=MX)
 	{
+		wsMinMax[Key]:=MX
 		CleanObject(Key)
 	}
 }
@@ -73,18 +75,24 @@ GoSub, ImagesInit
 return
 
 ImagesInit:
-IdListExe:=WinsGetProcesses(0)
-IdListCountExe:=IdListExe._MaxIndex()
-Loop % IdListCountExe{
-	getIconForExe(IdListExe[A_Index], icon_size, false)
-	WinGet, exename, ProcessName,% "ahk_id " . IdListExe[A_Index]
-	IdList:=WinsGetWindows(exename,0)
-	IdListCount:=IdList._MaxIndex()
-	Loop % IdListCount {
-		getWsNoBorder(IdList[A_Index])
+	fnImageInit()
+return
+
+fnImageInit()
+{
+	global icon_size
+	IdListExe:=WinsGetProcesses(0)
+	IdListCountExe:=IdListExe._MaxIndex()
+	Loop % IdListCountExe{
+		getIconForExe(IdListExe[A_Index], icon_size, false)
+		WinGet, exename, ProcessName,% "ahk_id " . IdListExe[A_Index]
+		IdList:=WinsGetWindows(exename,0)
+		IdListCount:=IdList._MaxIndex()
+		Loop % IdListCount {
+			getWsNoBorder(IdList[A_Index])
+		}
 	}
 }
-return
 
 CleanObjects:
 For Key, oldTitle in wsTitle
@@ -515,6 +523,28 @@ ShowWindowPicker:
 			prevWindowId:=IdList[i]
 			KeyWait Tab
 		}
+		if (GetKeyState("F5"))
+		{
+			IdListCount:=IdList._MaxIndex()
+			Loop % IdListCount
+			{
+				refreshWinId:=IdList[A_Index]
+				WinGet MX, MinMax, % "ahk_id " refreshWinId
+				if(MX==-1)
+				{
+					CleanObject(refreshWinId, 1)
+					WinRestore, ahk_id %refreshWinId%
+					j:=A_Index
+					rIcon:=myIcon%j%
+					WinSet, Style, -Redraw, ahk_id %rIcon%
+					if(j==i)
+						SetImage(rIcon, getWsBorder(refreshWinId))
+					else
+						SetImage(rIcon, getWsNoBorder(refreshWinId))
+					WinSet, Style, +Redraw, ahk_id %rIcon%
+				}
+			}
+		}
 		if (GetKeyState("Esc"))
 		{
 			prevWindowId:=""
@@ -595,6 +625,11 @@ return
 		iconNumber:=StrReplace(A_GuiControl, "Icon")
 		if(iconNumber is number)
 		{
+			if(iconNumber!=1)
+				actualWindowId:=hwnds[1]
+			else
+				actualWindowId:=hwnds[2]
+			WinActivate, ahk_id %actualWindowId%
 			prevWindowId:=hwnds[iconNumber]
 			WinClose, ahk_id %prevWindowId%
 			WinWaitClose , ahk_id %prevWindowId%, , 1
@@ -783,7 +818,53 @@ global wsMinMax
 global ACCENT_COLOR
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
+WinGet, exename, ProcessName,% "ahk_id " . SourceWin
 wsTitle[SourceWin]:=Title
+displayTitle:=limittext(Title)
+if(InStr(exename, "xplorer"))
+{
+	WinGetClass, class, % "ahk_id " . SourceWin
+	if(class=="CabinetWClass" || class=="ExploreWClass" )
+	{
+		windows := ComObjCreate("Shell.Application").Windows
+		For window in windows
+		{
+			doc :=   window.document
+			WindowHwnd:=0
+			try
+				WindowHwnd:=window.hWnd
+		}
+		Until   (WindowHwnd && WindowHwnd = SourceWin)
+		sFolder :=   doc.folder.self.path
+		sFolder:=StrSplit(sFolder, ["\", "/"])
+		folderCount:=sFolder._MaxIndex()
+		maxLenght:=24
+		if(folderCount>0)
+		{
+			displayTitle:=sFolder[folderCount]
+			if(folderCount>1)
+			{
+				newTitle:=sFolder[folderCount-1] . "/" . displayTitle
+				if(StrLen(newTitle)<maxLenght || StrLen(sFolder[folderCount])<(maxLenght-1))
+				{
+					displayTitle:=newTitle
+					newTitle:=sFolder[folderCount-2] . "/" . displayTitle
+					if(folderCount>2)
+					{
+						if(StrLen(newTitle)<maxLenght)
+							displayTitle:=newTitle
+					}
+				}
+			}
+		}
+		newTitle:=SubStr(displayTitle, -maxLenght)
+		if(StrLen(displayTitle)!=StrLen(newTitle) && InStr(displayTitle, "/"))
+		{
+			newTitle:=SubStr(displayTitle, -(maxLenght-3))
+			displayTitle:="..." . newTitle
+		}
+	}
+}
 
 WinGet MX, MinMax, % "ahk_id " . SourceWin
 wsMinMax[SourceWin]:=MX
@@ -811,7 +892,7 @@ Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
 Font := "SF Pro Display"
-Gdip_TextToGraphics(GB, limittext(Title), Options, Font, DstWidth-Bord, 30)
+Gdip_TextToGraphics(GB, displayTitle, Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 
 wsBorder[SourceWin]:=hBitmapB
@@ -828,7 +909,7 @@ Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold c99ffffff"
 Font := "SF Pro Display"
-Gdip_TextToGraphics(G, limittext(Title), Options, Font, DstWidth-Bord, 30)
+Gdip_TextToGraphics(G, displayTitle, Options, Font, DstWidth-Bord, 30)
 
 hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
 
@@ -873,7 +954,13 @@ getWsTitle(sourceWin){
 	global wsTitle
 	global lastWS
 
-	if(wsTitle.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+	; if(wsTitle.HasKey(sourceWin) && (A_TickCount - lastWS[sourceWin])<10000)
+	; 	return wsTitle[sourceWin]
+	; WinGetTitle, Title, % "ahk_id " . sourceWin
+	; if(wsTitle[sourceWin]!=Title)
+	; 	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
+	
+	if(wsTitle.HasKey(sourceWin)) ; && (A_TickCount - lastWS[sourceWin])<10000)
 		return wsTitle[sourceWin]
 	CopyWinImgToCache(sourceWin, 230*(A_ScreenDPI/96), 230*(A_ScreenDPI/96))
 	return wsTitle[sourceWin]
@@ -906,29 +993,39 @@ return
 RefreshWS:
 if(WinExist("ahk_id " . guid_id))
 	return
+RefreshWS0:
 For Key, hBitmap in wsNoBorder
 {
 	if(!WinActive("ahk_id " . Key))
 	{
-			CleanObject(Key)
+		CleanObject(Key)
 	}
 }
 SetTimer, ImagesInit, -1
 return
 
-CleanObject(Key)
+CleanObject(Key, force:=0)
 {
 	global wsNoBorder
 	global wsBorder
 	global wsTitle
 	global wsMinMax
 
-	DeleteObject(wsNoBorder[Key])
-	DeleteObject(wsBorder[Key])
-	wsNoBorder.Delete(Key)
-	wsBorder.Delete(Key)
-	wsTitle.Delete(Key)
-	wsMinMax.Delete(Key)
+	cleanObject:=1
+	if(!force && wsMinMax.HasKey(Key))
+	{
+		if(wsMinMax[Key]==-1)
+			cleanObject:=0
+	}
+	if(cleanObject)
+	{
+		DeleteObject(wsNoBorder[Key])
+		DeleteObject(wsBorder[Key])
+		wsNoBorder.Delete(Key)
+		wsBorder.Delete(Key)
+		wsTitle.Delete(Key)
+		wsMinMax.Delete(Key)
+	}
 }
 
 CleanAll:

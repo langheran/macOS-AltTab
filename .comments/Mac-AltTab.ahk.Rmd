@@ -3,3 +3,8 @@
 - F1 Close one by one message box
 - temporal F1 key sink 
 - Esc return to original window in #Tab
+
+- Explorer Path in window picker black rectangle
+- Save explorer windows
+- Highlight path and select first on enter
+- Badge count windows
