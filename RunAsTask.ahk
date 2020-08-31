@@ -1,4 +1,4 @@
-RunAsTask() {                         ;  By SKAN,  http://goo.gl/yG6A1F,  CD:19/Aug/2014 | MD:22/Aug/2014
+RunAsTask(handleExit=1) {                         ;  By SKAN,  http://goo.gl/yG6A1F,  CD:19/Aug/2014 | MD:22/Aug/2014
  
   Local CmdLine, TaskName, TaskExists, XML, TaskSchd, TaskRoot, RunAsTask
   Local TASK_CREATE := 0x2,  TASK_LOGON_INTERACTIVE_TOKEN := 3 
@@ -24,10 +24,11 @@ RunAsTask() {                         ;  By SKAN,  http://goo.gl/yG6A1F,  CD:19/
   }
  
   If ( not A_IsAdmin and not TaskExists )  { 
- 
-    Run *RunAs %CmdLine%, %A_ScriptDir%, UseErrorLevel
-    ExitApp
- 
+    if(handleExit)
+    {
+      Run *RunAs %CmdLine%, %A_ScriptDir%, UseErrorLevel
+      ExitApp
+    }
   }
  
   If ( A_IsAdmin and not TaskExists )      {  

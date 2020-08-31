@@ -1,3 +1,24 @@
+;@Ahk2Exe-SetName         Mac-AltTab
+;@Ahk2Exe-SetVersion      1.0.0.0
+;@Ahk2Exe-SetDescription  Mac-AltTab
+;@Ahk2Exe-SetCompanyName  Nisim Hurst
+;@Ahk2Exe-SetOrigFilename Mac-AltTab.exe
+;@Ahk2Exe-SetMainIcon     Mac-AltTab.ico
+;@Ahk2Exe-UseResourceLang 0x080a
+
+#Include RunAsTask.ahk
+RunAsTask(0)
+if not A_IsAdmin
+{
+	try
+	{
+		Run *RunAs "%A_ScriptFullPath%"
+	} catch {
+		msgbox, You must run this program as administrador!
+	}
+	ExitApp
+}
+
 #NoEnv
 ; #HotkeyInterval 100
 ; #MaxHotkeysPerInterval 1
@@ -6,6 +27,23 @@
 #KeyHistory 0
 #InstallKeybdHook
 ; #WinActivateForce
+
+has_fonts:=0
+Loop, Files, %windir%\Fonts\*.otf
+{
+	if(InStr(A_LoopFileName, "SF-Pro"))
+	{
+		has_fonts:=1
+		break
+	}
+}
+if (!has_fonts)
+{
+	Loop, Files, %A_ScriptDir%\fonts\SF Pro\*.otf
+	{
+		DllCall("Gdi32.dll\AddFontResourceEx", "Str", A_LoopFileLongPath, "UInt", 0x10, "UInt", 0)
+	}
+}
 
 #Include, GetSysImgLstIcon.ahk
 #Include, Gdip_All.ahk
@@ -32,8 +70,6 @@ ACCENT_COLOR_ALPHA:= "0x80" . ACCENT_COLOR_ORIGINAL
 OnExit Exit
 SetTimer, RefreshWS, 30000
 ; SetTimer, CleanAll, 300000
-#Include RunAsTask.ahk
-RunAsTask()
 OnMessage(0x404, "AHK_NOTIFYICON")
 
 ListLines Off
