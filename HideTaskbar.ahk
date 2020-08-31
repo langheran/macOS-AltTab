@@ -1,5 +1,6 @@
 #SingleInstance, Force
 #Persistent
+#WinActivateForce
 
 taskbarVisible:=0
 GoSub, HideTaskbar
@@ -13,13 +14,12 @@ WinHide, ahk_class NotifyIconOverflowWindow
 return
 
 ShowTaskbar:
+SetTimer, HideTaskbar, Off
 WinShow, ahk_class Shell_TrayWnd
-WinWait, ahk_class Shell_TrayWnd
+WinActivate, ahk_class Shell_TrayWnd
 WinSet, AlwaysOnTop, On, ahk_class Shell_TrayWnd
 WinShow, Start ahk_class Button
-SetTimer, HideTaskbar, Off
 WinShow, ahk_class NotifyIconOverflowWindow
-WinWait, ahk_class NotifyIconOverflowWindow
 WinActivate, ahk_class NotifyIconOverflowWindow
 WinSet, AlwaysOnTop, On, ahk_class NotifyIconOverflowWindow
 ControlClick,Button2,ahk_class Shell_TrayWnd
