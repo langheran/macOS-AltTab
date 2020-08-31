@@ -14,9 +14,11 @@ return
 
 ShowTaskbar:
 WinShow, ahk_class Shell_TrayWnd
+WinSet, AlwaysOnTop, On, ahk_class Shell_TrayWnd
 WinShow, Start ahk_class Button
 SetTimer, HideTaskbar, Off
 WinShow, ahk_class NotifyIconOverflowWindow
+WinSet, AlwaysOnTop, On, ahk_class NotifyIconOverflowWindow
 ControlClick,Button2,ahk_class Shell_TrayWnd
 return
 
