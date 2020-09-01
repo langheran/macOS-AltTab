@@ -467,36 +467,36 @@ return
 return
 
 GetPressedKey:
-a:=0
-this_key:=StrReplace(A_ThisHotkey, "#")
-if(this_key="BS")
-{
-	if(StrLen(SearchText)>0)
-		SearchText:=SubStr(SearchText, 1, StrLen(SearchText)-1)
-}
-else
-{
-	if(StrLen(this_key)<2)
-		SearchText:=SearchText . this_key
-}
-if(this_key="Left" || this_key="Right")
-{
-	if(this_key="Left")
+	a:=0
+	this_key:=StrReplace(A_ThisHotkey, "#")
+	if(this_key="BS")
 	{
-		force_shiftPressed:=1
+		if(StrLen(SearchText)>0)
+			SearchText:=SubStr(SearchText, 1, StrLen(SearchText)-1)
 	}
-}
-else
-{
-	i:=GetTitleMatch()
-	force_ChangeWindowInWindowPicker:=1
-}
-GoSub, ChangeWindowInWindowPicker
-SetTimer, ResetSearchText, -500
+	else
+	{
+		if(StrLen(this_key)<2)
+			SearchText:=SearchText . this_key
+	}
+	if(this_key="Left" || this_key="Right")
+	{
+		if(this_key="Left")
+		{
+			force_shiftPressed:=1
+		}
+	}
+	else
+	{
+		i:=GetTitleMatch()
+		force_ChangeWindowInWindowPicker:=1
+	}
+	GoSub, ChangeWindowInWindowPicker
+	SetTimer, ResetSearchText, -500
 return
 
 ResetSearchText:
-SearchText:=""
+	SearchText:=""
 return
 
 ChangeWindowInWindowPicker:
