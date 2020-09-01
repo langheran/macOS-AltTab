@@ -1442,17 +1442,34 @@ GetTitleMatch(){
 				ExactMatches.Push(v)
 		}
 	}
-	sort, TitleList, F SortByLetterPosition
-	if(ExactMatches._MaxIndex()==1)
+	if(ExactMatches._MaxIndex()==0)
 	{
-		title:=ExactMatches[1]
-	}
-	else
-	{
+		sort, TitleList, F SortByLetterPosition
 		Loop,Parse,TitleList,`n,`r
 		{
 			title:=Trim(A_LoopField)
 			break
+		}
+	}
+	else
+	{
+		if(ExactMatches._MaxIndex()==1)
+		{
+			title:=ExactMatches[1]
+		}
+		else
+		{
+			TitleList:=""
+			for k, v in ExactMatches
+			{
+				TitleList:=TitleList . v . "`n"
+			}
+			sort, TitleList, F SortByLetterPosition
+			Loop,Parse,TitleList,`n,`r
+			{
+				title:=Trim(A_LoopField)
+				break
+			}
 		}
 	}
 	for k, v in wsShortTitle
@@ -1468,6 +1485,7 @@ GetTitleMatch(){
 			}
 		}
 	}
+	return 1
 }
 
 SortByLetterPosition(a1, a2){
