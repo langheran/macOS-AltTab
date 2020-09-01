@@ -491,18 +491,6 @@ GetPressedKey:
 		force_ChangeWindowInWindowPicker:=1
 	}
 	GoSub, ChangeWindowInWindowPicker
-	; h:={}
-	; for k, v in IdList
-	; {
-	; 	h[v]:=1
-	; }
-	; TitleList:=""
-	; for k, v in wsShortTitle
-	; {
-	; 	if(h.HasKey(k))
-	; 		TitleList:=TitleList . v . "-" . StringDifference(SearchText, v) . "`n"
-	; }
-	; Tooltip, % SearchText . " - " .  wsShortTitle[IdList[i]] . "`n" . TitleList
 	SetTimer, ResetSearchText, -500
 return
 
