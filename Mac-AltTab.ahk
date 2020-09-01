@@ -934,6 +934,8 @@ try
 			}
 			Until   (WindowHwnd && WindowHwnd = SourceWin)
 			sFolder :=   doc.folder.self.path
+			if(InStr(sFolder, "::{"))
+				sFolder:=displayTitle
 			sFolder:=StrSplit(sFolder, ["\", "/"])
 			folderCount:=sFolder._MaxIndex()
 			maxLenght:=24
