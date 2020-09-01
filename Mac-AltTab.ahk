@@ -491,11 +491,24 @@ GetPressedKey:
 		force_ChangeWindowInWindowPicker:=1
 	}
 	GoSub, ChangeWindowInWindowPicker
+	; h:={}
+	; for k, v in IdList
+	; {
+	; 	h[v]:=1
+	; }
+	; TitleList:=""
+	; for k, v in wsShortTitle
+	; {
+	; 	if(h.HasKey(k))
+	; 		TitleList:=TitleList . v . "-" . StringDifference(SearchText, v) . "`n"
+	; }
+	; Tooltip, % SearchText . " - " .  wsShortTitle[IdList[i]] . "`n" . TitleList
 	SetTimer, ResetSearchText, -500
 return
 
 ResetSearchText:
 	SearchText:=""
+	Tooltip
 return
 
 ChangeWindowInWindowPicker:
@@ -1425,6 +1438,7 @@ GetTitleMatch(){
 	{
 		h[v]:=1
 	}
+	TitleList:=""
 	for k, v in wsShortTitle
 	{
 		if(h.HasKey(k))
@@ -1453,8 +1467,8 @@ GetTitleMatch(){
 
 SortByLetterPosition(a1, a2){
 	global SearchText
-	a1n:=StringDifference(SearchText, a1)
-	a2n:=StringDifference(SearchText, a2)
+	a1n:=StringDifference(SearchText, a1, 200)
+	a2n:=StringDifference(SearchText, a2, 200)
 	return a1n > a2n ? 1 : a1n < a2n ? -1 : 0
 }
 
