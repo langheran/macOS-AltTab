@@ -917,50 +917,53 @@ WinGetTitle, Title, % "ahk_id " . SourceWin
 WinGet, exename, ProcessName,% "ahk_id " . SourceWin
 wsTitle[SourceWin]:=Title
 displayTitle:=limittext(Title)
-if(InStr(exename, "xplorer"))
+try
 {
-	WinGetClass, class, % "ahk_id " . SourceWin
-	if(class=="CabinetWClass" || class=="ExploreWClass" )
+	if(InStr(exename, "xplorer"))
 	{
-		windows := ComObjCreate("Shell.Application").Windows
-		For window in windows
+		WinGetClass, class, % "ahk_id " . SourceWin
+		if(class=="CabinetWClass" || class=="ExploreWClass" )
 		{
-			doc :=   window.document
-			WindowHwnd:=0
-			try
-				WindowHwnd:=window.hWnd
-		}
-		Until   (WindowHwnd && WindowHwnd = SourceWin)
-		sFolder :=   doc.folder.self.path
-		sFolder:=StrSplit(sFolder, ["\", "/"])
-		folderCount:=sFolder._MaxIndex()
-		maxLenght:=24
-		if(folderCount>0)
-		{
-			displayTitle:=sFolder[folderCount]
-			if(folderCount>1)
+			windows := ComObjCreate("Shell.Application").Windows
+			For window in windows
 			{
-				newTitle:=sFolder[folderCount-1] . "/" . displayTitle
-				if(StrLen(newTitle)<maxLenght || StrLen(sFolder[folderCount])<(maxLenght-1))
+				doc :=   window.document
+				WindowHwnd:=0
+				try
+					WindowHwnd:=window.hWnd
+			}
+			Until   (WindowHwnd && WindowHwnd = SourceWin)
+			sFolder :=   doc.folder.self.path
+			sFolder:=StrSplit(sFolder, ["\", "/"])
+			folderCount:=sFolder._MaxIndex()
+			maxLenght:=24
+			if(folderCount>0)
+			{
+				displayTitle:=sFolder[folderCount]
+				if(folderCount>1)
 				{
-					displayTitle:=newTitle
-					newTitle:=sFolder[folderCount-2] . "/" . displayTitle
-					if(folderCount>2)
+					newTitle:=sFolder[folderCount-1] . "/" . displayTitle
+					if(StrLen(newTitle)<maxLenght || StrLen(sFolder[folderCount])<(maxLenght-1))
 					{
-						if(StrLen(newTitle)<maxLenght)
-							displayTitle:=newTitle
+						displayTitle:=newTitle
+						newTitle:=sFolder[folderCount-2] . "/" . displayTitle
+						if(folderCount>2)
+						{
+							if(StrLen(newTitle)<maxLenght)
+								displayTitle:=newTitle
+						}
 					}
 				}
 			}
-		}
-		newTitle:=SubStr(displayTitle, -maxLenght)
-		if(StrLen(displayTitle)!=StrLen(newTitle) && InStr(displayTitle, "/"))
-		{
-			newTitle:=SubStr(displayTitle, -(maxLenght-3))
-			displayTitle:="..." . newTitle
+			newTitle:=SubStr(displayTitle, -maxLenght)
+			if(StrLen(displayTitle)!=StrLen(newTitle) && InStr(displayTitle, "/"))
+			{
+				newTitle:=SubStr(displayTitle, -(maxLenght-3))
+				displayTitle:="..." . newTitle
+			}
 		}
 	}
-}
+} catch {}
 wsShortTitle[SourceWin]:=displayTitle
 
 WinGet MX, MinMax, % "ahk_id " . SourceWin
