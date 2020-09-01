@@ -1430,16 +1430,28 @@ GetTitleMatch(){
 		h[v]:=1
 	}
 	TitleList:=""
+	ExactMatches:=[]
 	for k, v in wsShortTitle
 	{
 		if(h.HasKey(k))
+		{
 			TitleList:=TitleList . v . "`n"
+			if(RegExMatch(v, "i)" . SearchText))
+				ExactMatches.Push(v)
+		}
 	}
 	sort, TitleList, F SortByLetterPosition
-	Loop,Parse,TitleList,`n,`r
+	if(ExactMatches._MaxIndex()==1)
 	{
-		title:=Trim(A_LoopField)
-		break
+		title:=ExactMatches[1]
+	}
+	else
+	{
+		Loop,Parse,TitleList,`n,`r
+		{
+			title:=Trim(A_LoopField)
+			break
+		}
 	}
 	for k, v in wsShortTitle
 	{
