@@ -491,7 +491,7 @@ GetPressedKey:
 		force_ChangeWindowInWindowPicker:=1
 	}
 	GoSub, ChangeWindowInWindowPicker
-	SetTimer, ResetSearchText, -500
+	SetTimer, ResetSearchText, -1000
 return
 
 ResetSearchText:
