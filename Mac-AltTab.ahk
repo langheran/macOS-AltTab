@@ -467,7 +467,6 @@ return
 return
 
 GetPressedKey:
-	a:=0
 	this_key:=StrReplace(A_ThisHotkey, "#")
 	if(this_key="BS")
 	{
@@ -523,8 +522,6 @@ ChangeWindowInWindowPicker:
 	{
 		i:=Abs(Mod(count,IdListCount))+1
 	}
-	a:=a+1
-	tooltip, % count
 	myIcon:=myIcon%i%
 	myIconBorder:=myIconBorder%i%
 	ThumbIcon:=ThumbIcon%i%
