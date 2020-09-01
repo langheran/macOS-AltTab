@@ -51,6 +51,7 @@ pToken := Gdip_Startup()
 wsBorder:={}
 wsNoBorder:={}
 wsTitle:={}
+wsShortTitle:={}
 wsMinMax:={}
 lastWS:={}
 exeIcons:={}
@@ -309,9 +310,9 @@ RemoveToolTip:
 ToolTip
 return
 
-#IfWinNotExist, ahk_exe Mac-AltTab.exe
-#BS::
-WinGet, close_exename, ProcessName, A
+; #IfWinNotExist, ahk_exe Mac-AltTab.exe
+; #BS::
+; WinGet, close_exename, ProcessName, A
 CloseExeByName:
 IdList:=WinsGetWindows(close_exename,0)
 Loop, % IdList._MaxIndex(){
@@ -465,6 +466,85 @@ return
 ; }
 return
 
+GetPressedKey:
+a:=0
+this_key:=StrReplace(A_ThisHotkey, "#")
+if(this_key="BS")
+{
+	if(StrLen(SearchText)>0)
+		SearchText:=SubStr(SearchText, 1, StrLen(SearchText)-1)
+}
+else
+{
+	if(StrLen(this_key)<2)
+		SearchText:=SearchText . this_key
+}
+if(this_key="Left" || this_key="Right")
+{
+	if(this_key="Left")
+	{
+		force_shiftPressed:=1
+	}
+}
+else
+{
+	i:=GetTitleMatch()
+	force_ChangeWindowInWindowPicker:=1
+}
+GoSub, ChangeWindowInWindowPicker
+SetTimer, ResetSearchText, -500
+return
+
+ResetSearchText:
+SearchText:=""
+return
+
+ChangeWindowInWindowPicker:
+; refresh_id:=prevWindowId
+; SetTimer, RefreshWin, -1
+if(pressedCount)
+{
+	WinSet, Style, -Redraw, ahk_id %myIcon%
+	SetImage(myIcon, getWsNoBorder(prevWindowId))
+	WinSet, Style, +Redraw, ahk_id %myIcon%
+}
+
+shiftPressed := GetKeyState("Shift") || force_shiftPressed
+force_shiftPressed:=0
+count:=count+1-2*shiftPressed
+if(count<1)
+	count:=IdList._MaxIndex()
+if(force_ChangeWindowInWindowPicker)
+{
+	force_ChangeWindowInWindowPicker:=0
+	count:=i
+}
+else
+{
+	i:=Abs(Mod(count,IdListCount))+1
+}
+a:=a+1
+tooltip, % count
+myIcon:=myIcon%i%
+myIconBorder:=myIconBorder%i%
+ThumbIcon:=ThumbIcon%i%
+
+WinSet, Style, -Redraw, ahk_id %myIcon%
+SetImage(myIcon, getWsBorder(IdList[i]))
+WinSet, Style, +Redraw, ahk_id %myIcon%
+if(!makeTranslucent)
+{
+	GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
+}
+else
+{
+	SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
+}
+; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
+
+prevWindowId:=IdList[i]
+return
+
 ShowWindowPicker:
 	IdList:=WinsGetWindows(exename,0)
 	count:=0
@@ -473,6 +553,16 @@ ShowWindowPicker:
 		return
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
 	guid_id:=WinExist()
+	
+	SearchText:=""
+	Hotkey, IfWinExist, % "ahk_id " . guid_id
+	Keys := ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","0","-",".","_","BS","Left","Right"]
+	for k, v in Keys
+	{
+		Hotkey, #%v%, GetPressedKey
+	}
+	Hotkey, IfWinExist
+
 	Gui, 2:  Margin, 20, 20
 	Loop % IdListCount{
 		i:=A_Index
@@ -518,6 +608,7 @@ ShowWindowPicker:
 	GoSub, ShowWindow
 
 	count:=0
+	pressedCount:=0
 	prevWindowId:=active_id
 	selectWindow:=0
 	closeWindow:=0
@@ -525,39 +616,9 @@ ShowWindowPicker:
 	{
 		if (GetKeyState("Tab", "P") || count=0)
 		{
-			; refresh_id:=prevWindowId
-			; SetTimer, RefreshWin, -1
-			if(count)
-			{
-				WinSet, Style, -Redraw, ahk_id %myIcon%
-				SetImage(myIcon, getWsNoBorder(prevWindowId))
-				WinSet, Style, +Redraw, ahk_id %myIcon%
-			}
-
-			shiftPressed := GetKeyState("Shift")
-			count:=count+1-2*shiftPressed
-			if(count<0)
-				count:=IdList._MaxIndex()
-			i:=Abs(Mod(count,IdListCount))+1
-			myIcon:=myIcon%i%
-			myIconBorder:=myIconBorder%i%
-			ThumbIcon:=ThumbIcon%i%
-
-			WinSet, Style, -Redraw, ahk_id %myIcon%
-			SetImage(myIcon, getWsBorder(IdList[i]))
-			WinSet, Style, +Redraw, ahk_id %myIcon%
-			if(!makeTranslucent)
-			{
-				GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
-			}
-			else
-			{
-				SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
-			}
-			; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
-
-			prevWindowId:=IdList[i]
+			GoSub, ChangeWindowInWindowPicker
 			KeyWait Tab
+			pressedCount:=pressedCount+1
 		}
 		if (GetKeyState("F5"))
 		{
@@ -586,30 +647,30 @@ ShowWindowPicker:
 			prevWindowId:=""
 			break
 		}
-		if GetKeyState("BS", "P")
-		{
-			WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
-			Gui, 2: -AlwaysOnTop
-			MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
-			IfMsgBox, Yes
-			{
-				Loop, % IdList._MaxIndex(){
-					i:=Abs(Mod(count,IdListCount))+1
-					close_id := IdList[i]
-					WinActivate, % "ahk_id " . close_id
-					WinGetTitle, close_title, % "ahk_id " . close_id
-					MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
-					IfMsgBox, Yes
-					{
-						WinClose, % "ahk_id " . close_id
-					}
-					count:=count+1
-				}
-			} else {
-				prevWindowId:=""
-				break
-			}
-		}
+		; if GetKeyState("BS", "P")
+		; {
+		; 	WinGet, close_exename, ProcessName, % "ahk_id " . prevWindowId
+		; 	Gui, 2: -AlwaysOnTop
+		; 	MsgBox, 4,CERRAR, Cerrar %close_exename%? (Si o No)
+		; 	IfMsgBox, Yes
+		; 	{
+		; 		Loop, % IdList._MaxIndex(){
+		; 			i:=Abs(Mod(count,IdListCount))+1
+		; 			close_id := IdList[i]
+		; 			WinActivate, % "ahk_id " . close_id
+		; 			WinGetTitle, close_title, % "ahk_id " . close_id
+		; 			MsgBox, 4,CERRAR, Cerrar %close_title%? (Si o No)
+		; 			IfMsgBox, Yes
+		; 			{
+		; 				WinClose, % "ahk_id " . close_id
+		; 			}
+		; 			count:=count+1
+		; 		}
+		; 	} else {
+		; 		prevWindowId:=""
+		; 		break
+		; 	}
+		; }
 	}
 	WinMove, % "ahk_id " . guid_id,, -100, -100, 0, 0
 	if(prevWindowId!="" && !closeWindow)
@@ -849,6 +910,7 @@ global Bord
 global wsBorder
 global wsNoBorder
 global wsTitle
+global wsShortTitle
 global lastWS
 global wsMinMax
 global ACCENT_COLOR
@@ -901,6 +963,7 @@ if(InStr(exename, "xplorer"))
 		}
 	}
 }
+wsShortTitle[SourceWin]:=displayTitle
 
 WinGet MX, MinMax, % "ahk_id " . SourceWin
 wsMinMax[SourceWin]:=MX
@@ -1045,6 +1108,7 @@ CleanObject(Key, force:=0)
 	global wsNoBorder
 	global wsBorder
 	global wsTitle
+	global wsShortTitle
 	global wsMinMax
 
 	cleanObject:=1
@@ -1060,6 +1124,7 @@ CleanObject(Key, force:=0)
 		wsNoBorder.Delete(Key)
 		wsBorder.Delete(Key)
 		wsTitle.Delete(Key)
+		wsShortTitle.Delete(Key)
 		wsMinMax.Delete(Key)
 	}
 }
@@ -1349,4 +1414,81 @@ Local  File, Var, mDC, sizeofRGBQUAD, ICONINFO:=[], BITMAP:=[], BITMAPINFOHEADER
   DllCall( "DeleteObject", "Ptr",ICONINFO.hbmMask  )  
   DllCall( "DeleteObject", "Ptr",ICONINFO.hbmColor )
 Return True  
+}
+
+;###############################################
+
+GetTitleMatch(){
+	global wsShortTitle
+	global SearchText
+	global IdList
+
+	h:={}
+	for k, v in IdList
+	{
+		h[v]:=1
+	}
+	for k, v in wsShortTitle
+	{
+		if(h.HasKey(k))
+			TitleList:=TitleList . v . "`n"
+	}
+	sort, TitleList, F SortByLetterPosition
+	Loop,Parse,TitleList,`n,`r
+	{
+		title:=Trim(A_LoopField)
+		break
+	}
+	for k, v in wsShortTitle
+	{
+		if(v=title)
+		{
+			for i, v in IdList
+			{
+				if(k=v)
+				{
+					return i
+				}
+			}
+		}
+	}
+}
+
+SortByLetterPosition(a1, a2){
+	global SearchText
+	a1n:=StringDifference(SearchText, a1)
+	a2n:=StringDifference(SearchText, a2)
+	return a1n > a2n ? 1 : a1n < a2n ? -1 : 0
+}
+
+StringDifference(string1, string2, maxOffset=1) {    ;returns a float: between "0.0 = identical" and "1.0 = nothing in common" 
+  If (string1 = string2) 
+    Return (string1 == string2 ? 0/1 : 0.2/StrLen(string1))    ;either identical or (assumption:) "only one" char with different case 
+  If (string1 = "" OR string2 = "") 
+    Return (string1 = string2 ? 0/1 : 1/1) 
+  StringSplit, n, string1 
+  StringSplit, m, string2 
+  ni := 1, mi := 1, lcs := 0 
+  While((ni <= n0) AND (mi <= m0)) { 
+    If (n%ni% == m%mi%) 
+      EnvAdd, lcs, 1 
+    Else If (n%ni% = m%mi%) 
+      EnvAdd, lcs, 0.8 
+    Else{ 
+      Loop, %maxOffset%  { 
+        oi := ni + A_Index, pi := mi + A_Index 
+        If ((n%oi% = m%mi%) AND (oi <= n0)){ 
+            ni := oi, lcs += (n%oi% == m%mi% ? 1 : 0.8) 
+            Break 
+        } 
+        If ((n%ni% = m%pi%) AND (pi <= m0)){ 
+            mi := pi, lcs += (n%ni% == m%pi% ? 1 : 0.8) 
+            Break 
+        } 
+      } 
+    } 
+    EnvAdd, ni, 1 
+    EnvAdd, mi, 1 
+  } 
+  Return ((n0 + m0)/2 - lcs) / (n0 > m0 ? n0 : m0) 
 }
