@@ -500,49 +500,49 @@ SearchText:=""
 return
 
 ChangeWindowInWindowPicker:
-; refresh_id:=prevWindowId
-; SetTimer, RefreshWin, -1
-if(pressedCount)
-{
+	; refresh_id:=prevWindowId
+	; SetTimer, RefreshWin, -1
+	if(pressedCount)
+	{
+		WinSet, Style, -Redraw, ahk_id %myIcon%
+		SetImage(myIcon, getWsNoBorder(prevWindowId))
+		WinSet, Style, +Redraw, ahk_id %myIcon%
+	}
+
+	shiftPressed := GetKeyState("Shift") || force_shiftPressed
+	force_shiftPressed:=0
+	count:=count+1-2*shiftPressed
+	if(count<1)
+		count:=IdList._MaxIndex()
+	if(force_ChangeWindowInWindowPicker)
+	{
+		force_ChangeWindowInWindowPicker:=0
+		count:=i
+	}
+	else
+	{
+		i:=Abs(Mod(count,IdListCount))+1
+	}
+	a:=a+1
+	tooltip, % count
+	myIcon:=myIcon%i%
+	myIconBorder:=myIconBorder%i%
+	ThumbIcon:=ThumbIcon%i%
+
 	WinSet, Style, -Redraw, ahk_id %myIcon%
-	SetImage(myIcon, getWsNoBorder(prevWindowId))
+	SetImage(myIcon, getWsBorder(IdList[i]))
 	WinSet, Style, +Redraw, ahk_id %myIcon%
-}
+	if(!makeTranslucent)
+	{
+		GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
+	}
+	else
+	{
+		SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
+	}
+	; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 
-shiftPressed := GetKeyState("Shift") || force_shiftPressed
-force_shiftPressed:=0
-count:=count+1-2*shiftPressed
-if(count<1)
-	count:=IdList._MaxIndex()
-if(force_ChangeWindowInWindowPicker)
-{
-	force_ChangeWindowInWindowPicker:=0
-	count:=i
-}
-else
-{
-	i:=Abs(Mod(count,IdListCount))+1
-}
-a:=a+1
-tooltip, % count
-myIcon:=myIcon%i%
-myIconBorder:=myIconBorder%i%
-ThumbIcon:=ThumbIcon%i%
-
-WinSet, Style, -Redraw, ahk_id %myIcon%
-SetImage(myIcon, getWsBorder(IdList[i]))
-WinSet, Style, +Redraw, ahk_id %myIcon%
-if(!makeTranslucent)
-{
-	GuiControl, 2:, TitleFrame,% "  " . getWsTitle(IdList[i])
-}
-else
-{
-	SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
-}
-; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
-
-prevWindowId:=IdList[i]
+	prevWindowId:=IdList[i]
 return
 
 ShowWindowPicker:
