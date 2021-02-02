@@ -68,8 +68,9 @@ WS_BORDER := 0x00800000
 ACCENT_COLOR_ORIGINAL:= getAccentColor()
 ACCENT_COLOR:="0xff" . ACCENT_COLOR_ORIGINAL ; 0xff721CAA
 ACCENT_COLOR_ALPHA:= "0x80" . ACCENT_COLOR_ORIGINAL
+EnvGet, vUserProfile, USERPROFILE
 OnExit Exit
-SetTimer, RefreshWS, 30000
+SetTimer, RefreshWS, 60000
 ; SetTimer, CleanAll, 300000
 OnMessage(0x404, "AHK_NOTIFYICON")
 
@@ -89,7 +90,7 @@ SendMode Input
 
 #Include switchDesktop.ahk
 
-SetTimer, MonitorTitles, 1000
+SetTimer, MonitorTitles, 30000
 SetTimer, ImagesInit, -1
 
 return
@@ -536,7 +537,13 @@ ChangeWindowInWindowPicker:
 	}
 	else
 	{
-		SetTitleFrameText(gwidth1,gheight1,0xff000000,getWsTitle(IdList[i]), TextBackground)
+		titleBarText:=getWsTitle(IdList[i])
+		; if(gwidth1<StrLen(titleBarText)*5)
+		; {
+		; 	titleBarText:=limittext(titleBarText, len=10)
+		; }
+		; tooltip, % gwidth1 . "-" . (StrLen(titleBarText)*5)
+		SetTitleFrameText(gwidth1,gheight1,0xff000000,titleBarText, TextBackground)
 	}
 	; WinSet, Style, +%WS_BORDER%, ahk_id %myIcon%
 
@@ -682,10 +689,21 @@ ShowWindowPicker:
 	}
 	Gui, 2:  Cancel
 	Gui, 2:  Destroy
+	SetTimer, RefreshPrevWindow, -1
 	if(closeWindow)
 	{
 		GoSub, ShowWindowPicker
 	}
+return
+
+RefreshPrevWindow:
+; return
+if(WinExist("ahk_id " . prevWindowId))
+{
+	CleanObject(prevWindowId)
+	getWsBorder(refreshWinId)
+	getWsNoBorder(refreshWinId)
+}
 return
 
 ShowWindow:
@@ -912,6 +930,7 @@ global wsShortTitle
 global lastWS
 global wsMinMax
 global ACCENT_COLOR
+global vUserProfile
 
 WinGetTitle, Title, % "ahk_id " . SourceWin
 WinGet, exename, ProcessName,% "ahk_id " . SourceWin
@@ -919,8 +938,9 @@ wsTitle[SourceWin]:=Title
 displayTitle:=limittext(Title)
 try
 {
-	if(InStr(exename, "xplorer"))
+	if(InStr(exename, "xplorer") || InStr(exename, "cmd"))
 	{
+		sFolder:=0
 		WinGetClass, class, % "ahk_id " . SourceWin
 		if(class=="CabinetWClass" || class=="ExploreWClass" )
 		{
@@ -936,6 +956,15 @@ try
 			sFolder :=   doc.folder.self.path
 			if(InStr(sFolder, "::{"))
 				sFolder:=displayTitle
+		}
+		if(class=="ConsoleWindowClass")
+		{
+			winget, winpid, PID, % "ahk_id " . SourceWin
+			sFolderOld:=RTrim(GetProcessCurrentDirectory(winpid),"\")
+			sFolder:=sFolderOld
+		}
+		if(sFolder)
+		{
 			sFolder:=StrSplit(sFolder, ["\", "/"])
 			folderCount:=sFolder._MaxIndex()
 			maxLenght:=24
@@ -963,6 +992,10 @@ try
 				newTitle:=SubStr(displayTitle, -(maxLenght-3))
 				displayTitle:="..." . newTitle
 			}
+		}
+		if(class=="ConsoleWindowClass")
+		{
+			wsTitle[SourceWin]:=StrReplace(sFolderOld,vUserProfile,"~")
 		}
 	}
 } catch {}
@@ -1525,4 +1558,53 @@ StringDifference(string1, string2, maxOffset=1) {    ;returns a float: between "
     EnvAdd, mi, 1 
   } 
   Return ((n0 + m0)/2 - lcs) / (n0 > m0 ? n0 : m0) 
+}
+
+GetProcessCurrentDirectory(PID)  {
+   static PROCESS_QUERY_INFORMATION := 0x400, PROCESS_VM_READ := 0x10, STATUS_SUCCESS := 0
+   
+   hProc := DllCall("OpenProcess", UInt, PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, Int, 0, UInt, PID, Ptr)
+   (A_Is64bitOS && DllCall("IsWow64Process", Ptr, hProc, UIntP, IsWow64))
+   if (!A_Is64bitOS || IsWow64)
+      PtrSize := 4, PtrType := "UInt", pPtr := "UIntP"
+   else
+      PtrSize := 8, PtrType := "Int64", pPtr := "Int64P"
+   offsetCURDIR := 4*4 + PtrSize*5
+   
+   hModule := DllCall("GetModuleHandle", "str", "Ntdll", Ptr)
+   if (A_PtrSize < PtrSize)  {            ; <<—— script 32, target process 64
+      if !QueryInformationProcess := DllCall("GetProcAddress", Ptr, hModule, AStr, "NtWow64QueryInformationProcess64", Ptr)
+         failed := "NtWow64QueryInformationProcess64"
+      if !ReadProcessMemory := DllCall("GetProcAddress", Ptr, hModule, AStr, "NtWow64ReadVirtualMemory64", Ptr)
+         failed := "NtWow64ReadVirtualMemory64"
+      info := 0, szPBI := 48, offsetPEB := 8
+   }
+   else  {
+      if !QueryInformationProcess := DllCall("GetProcAddress", Ptr, hModule, AStr, "NtQueryInformationProcess", Ptr)
+         failed := "NtQueryInformationProcess"
+      ReadProcessMemory := "ReadProcessMemory"
+      if (A_PtrSize > PtrSize)            ; <<—— script 64, target process 32
+         info := 26, szPBI := 8, offsetPEB := 0
+      else                                ; <<—— script and target process have the same bitness
+         info := 0, szPBI := PtrSize * 6, offsetPEB := PtrSize
+   }
+   if failed  {
+      DllCall("CloseHandle", Ptr, hProc)
+      MsgBox, Failed to get pointer to %failed%
+      Return
+   }
+   VarSetCapacity(PBI, 48, 0)
+   if DllCall(QueryInformationProcess, Ptr, hProc, UInt, info, Ptr, &PBI, UInt, szPBI, UIntP, bytes) != STATUS_SUCCESS  {
+      DllCall("CloseHandle", Ptr, hProc)
+      Return
+   }
+   pPEB := NumGet(&PBI + offsetPEB, PtrType)
+   DllCall(ReadProcessMemory, Ptr, hProc, PtrType, pPEB + PtrSize * 4, pPtr, pRUPP, PtrType, PtrSize, UIntP, bytes)
+   DllCall(ReadProcessMemory, Ptr, hProc, PtrType, pRUPP + offsetCURDIR, UShortP, szBuff, PtrType, 2, UIntP, bytes)
+   DllCall(ReadProcessMemory, Ptr, hProc, PtrType, pRUPP + offsetCURDIR + PtrSize, pPtr, pCURDIR, PtrType, PtrSize, UIntP, bytes)
+   
+   VarSetCapacity(buff, szBuff, 0)
+   DllCall(ReadProcessMemory, Ptr, hProc, PtrType, pCURDIR, Ptr, &buff, PtrType, szBuff, UIntP, bytes)
+   DllCall("CloseHandle", Ptr, hProc)
+   Return currentDirPath := StrGet(&buff, "UTF-16")
 }
