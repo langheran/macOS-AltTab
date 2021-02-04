@@ -5,7 +5,7 @@
 ;@Ahk2Exe-SetOrigFilename Mac-AltTab.exe
 ;@Ahk2Exe-SetMainIcon     Mac-AltTab.ico
 ;@Ahk2Exe-UseResourceLang 0x080a
-
+#Include LibCon.ahk
 #Include RunAsTask.ahk
 RunAsTask(0)
 if not A_IsAdmin
@@ -920,6 +920,22 @@ SetTitleFrameText(DstWidth,DstHeight, color, text, ctrl)
 	Gdip_DeleteGraphics(GB)
 	Gdip_DisposeImage(pBitmapB)
 }
+ReadConsoleLine(){
+    global
+    totalCmdLineHeight:=0
+    GetConsoleCursorPosition(xCmdLine,totalCmdLineHeight)
+    linesToRead:=5
+    CmdLine:=""
+    Loop, % linesToRead
+    {
+        CmdLine:=ReadConsoleOutput( 0, 0, GetConsoleClientWidth(), A_Index,totalCmdLineHeight)
+        if(InStr(CmdLine, "C:"))
+            break
+    }
+    CmdLine:=RegExReplace(CmdLine, "C:.*?\>", "")
+    CmdLine:=RegExReplace(CmdLine, "\n", "")
+    return CmdLine
+}
 CopyWinImgToCache(SourceWin,DstWidth, DstHeight)
 {
 global Bord
@@ -995,7 +1011,25 @@ try
 		}
 		if(class=="ConsoleWindowClass")
 		{
-			wsTitle[SourceWin]:=StrReplace(sFolderOld,vUserProfile,"~")
+			WinGet, cmdPid, PID,% "ahk_id " . SourceWin
+			AttachConsole(cmdPid)
+			cmdLine:=ReadConsoleLine()
+			cmdLine:=Trim(LTrim(RTrim(cmdLine, "`n"),"`n"))
+			if(cmdLine="")
+			{
+				ControlSend,,{Up},ahk_pid %cmdPid%
+				Sleep, 500
+				cmdLine:=ReadConsoleLine()
+			}
+			FreeConsole()
+			if(cmdLine)
+				wsTitle[SourceWin]:=cmdLine
+			else
+			{
+				newTitle := StrReplace(sFolderOld,vUserProfile,"~")
+				newTitle := StrReplace(newTitle,"\","/")
+				wsTitle[SourceWin]:=newTitle
+			}
 		}
 	}
 } catch {}
