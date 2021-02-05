@@ -1015,14 +1015,15 @@ try
 			AttachConsole(cmdPid)
 			cmdLine:=ReadConsoleLine()
 			cmdLine:=Trim(LTrim(RTrim(cmdLine, "`n"),"`n"))
-			if(cmdLine="")
+			if(cmdLine="" && !WinActive("ahk_id " SourceWin))
 			{
 				ControlSend,,{Up},ahk_pid %cmdPid%
 				Sleep, 500
 				cmdLine:=ReadConsoleLine()
 			}
 			FreeConsole()
-			if(cmdLine)
+			cmdLine:=Trim(LTrim(RTrim(cmdLine, "`n"),"`n"))
+			if(cmdLine!="")
 				wsTitle[SourceWin]:=cmdLine
 			else
 			{
