@@ -71,6 +71,11 @@ ACCENT_COLOR_ALPHA:= "0x80" . ACCENT_COLOR_ORIGINAL
 EnvGet, vUserProfile, USERPROFILE
 OnExit Exit
 SetTimer, RefreshWS, 60000
+
+; DllCall( "RegisterShellHookWindow", UInt, A_ScriptHwnd )
+; MsgNum := DllCall( "RegisterWindowMessage", Str,"SHELLHOOK" )
+; OnMessage( MsgNum, "ShellMessage" )
+
 ; SetTimer, CleanAll, 300000
 OnMessage(0x404, "AHK_NOTIFYICON")
 
@@ -929,7 +934,7 @@ ReadConsoleLine(){
     Loop, % linesToRead
     {
         CmdLine:=ReadConsoleOutput( 0, 0, GetConsoleClientWidth(), A_Index,totalCmdLineHeight)
-        if(InStr(CmdLine, "C:"))
+        if(InStr(CmdLine, "C:") || InStr(CmdLine, "@"))
             break
     }
     CmdLine:=RegExReplace(CmdLine, "C:.*?\>", "")
@@ -1643,3 +1648,20 @@ GetProcessCurrentDirectory(PID)  {
    DllCall("CloseHandle", Ptr, hProc)
    Return currentDirPath := StrGet(&buff, "UTF-16")
 }
+
+; ShellMessage( wParam,lParam )	; Gets all Shell Hook messages
+; {
+; 	global guid_id
+; 	if(WinExist("ahk_id " . guid_id))
+; 		return
+; 	active_id:= lParam    ; wID is Window Handle
+; 	tooltip, % active_id
+; 	;  HSHELL_WINDOWCREATED := 1 ; Only act on Window Created messages
+; 	; if(!WinActive("ahk_id " active_id))
+; 	; {
+; 		CleanObject(active_id)
+; 		getWsBorder(active_id)
+; 		getWsNoBorder(active_id)
+
+; 	; }
+; }
