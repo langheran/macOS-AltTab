@@ -977,6 +977,19 @@ try
 			sFolder :=   doc.folder.self.path
 			if(InStr(sFolder, "::{"))
 				sFolder:=displayTitle
+			newWsTitle:=""
+			splitFolder:=StrSplit(sFolder, ["\", "/"])
+			splitCount:=splitFolder._MaxIndex()
+			folderCount:=7
+			Loop, % splitCount
+			{
+				
+				newWsTitle:= splitFolder[splitCount - A_Index + 1] . (newWsTitle?"/":"") . newWsTitle
+				folderCount:=folderCount-1
+				if(!folderCount)
+					break
+			}
+			wsTitle[SourceWin]:=newWsTitle
 		}
 		if(class=="ConsoleWindowClass")
 		{
