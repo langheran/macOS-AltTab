@@ -484,6 +484,12 @@ GetPressedKey:
 		if(StrLen(this_key)<2)
 			SearchText:=SearchText . this_key
 	}
+	if(this_key="F4")
+	{
+		WinClose, ahk_id %prevWindowId%
+		WinWaitClose , ahk_id %prevWindowId%, , 1
+		closeWindow:=1
+	}
 	if(this_key="Left" || this_key="Right")
 	{
 		if(this_key="Left")
@@ -566,7 +572,7 @@ ShowWindowPicker:
 	
 	SearchText:=""
 	Hotkey, IfWinExist, % "ahk_id " . guid_id
-	Keys := ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","0","-",".","_","BS","Left","Right"]
+	Keys := ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","1","2","3","4","5","6","7","8","9","0","-",".","_","BS","Left","Right", "F4"]
 	for k, v in Keys
 	{
 		Hotkey, #%v%, GetPressedKey
