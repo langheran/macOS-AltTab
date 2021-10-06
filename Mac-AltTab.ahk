@@ -19,6 +19,14 @@ if not A_IsAdmin
 	ExitApp
 }
 
+Process, Priority,, Realtime
+GoSub, GetFontList
+global FontName
+FontName := "SF Pro Display"
+if(!HasVal(FontList, FontName)){
+	FontName:="Calibri"
+}
+
 #NoEnv
 ; #HotkeyInterval 100
 ; #MaxHotkeysPerInterval 1
@@ -99,6 +107,32 @@ SetTimer, MonitorTitles, 30000
 SetTimer, ImagesInit, -1
 
 return
+
+GetFontList:
+Global FontList := []
+EnumFonts() {
+    hDC := DllCall("GetDC", "UInt", DllCall("GetDesktopWindow"))
+    Callback := RegisterCallback("EnumFontsCallback", "F")
+    DllCall("EnumFontFamilies", "UInt", hDC, "UInt", 0, "Ptr", Callback, "UInt", lParam := 0)
+    DllCall("ReleaseDC", "UInt", hDC)
+}
+
+EnumFontsCallback(lpelf) {
+    FontList.Push(StrGet(lpelf + 28, 32))
+    Return True
+}
+
+EnumFonts()
+return
+
+HasVal(haystack, needle) {
+	for index, value in haystack
+		if (value = needle)
+			return index
+	if !IsObject(haystack)
+		throw Exception("Bad haystack!", -1, haystack)
+	return 0
+}
 
 MonitorTitles:
 if(WinExist("ahk_id " . guid_id))
@@ -194,7 +228,7 @@ WinGet, exename, ProcessName,A
 IdList:=WinsGetProcesses(0)
 IdListCount:=IdList._MaxIndex()
 Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
-guid_id:=WinExist()
+guid_id:=hGui
 Gui, 2:  Margin, 20, 20
 Loop % IdListCount{
 	i:=A_Index
@@ -568,7 +602,7 @@ ShowWindowPicker:
 	if(!IdListCount)
 		return
 	Gui, 2: +AlwaysOnTop +ToolWindow -SysMenu -Caption +LastFound +hwndhGui
-	guid_id:=WinExist()
+	guid_id:=hGui
 	
 	SearchText:=""
 	Hotkey, IfWinExist, % "ahk_id " . guid_id
@@ -608,7 +642,7 @@ ShowWindowPicker:
 	; makeTranslucent:=0
 	if(!makeTranslucent)
 	{
-		Gui, 2: Font, SF Pro Display Bold
+		Gui, 2: Font, %FontName% Bold
 		Gui, 2: Add, Text, x20 y%y% w%gwidth% h%gheight% +0x200 vTitleFrame cWhite +Left BackgroundTrans ReadOnly 0x1000, ;0x1000->ss_sunken +0x201->center +Center
 		Gui, 2: Color, 333333
 	}
@@ -720,7 +754,8 @@ return
 ShowWindow:
 ; y_pos := A_ScreenHeight/2-120
 ; Gui, 2:  Show, y%y_pos% NoActivate 
-Gui, 2:  Show, NoActivate 
+Gui, 2:  Show, NoActivate
+Sleep, 10
 if(A_ThisHotkey=="#Tab" && (!IdListCount || IdListCount>=min_win_width)) ; Last border correction
 {
 	myIcon:=myIcon%i%
@@ -921,7 +956,7 @@ SetTitleFrameText(DstWidth,DstHeight, color, text, ctrl)
 	if(text)
 	{
 		Options := "x0 y5 h" . (DstHeight) . " w" . (DstWidth) . " s24 Left Bold cffffffff"
-		Font := "SF Pro Display"
+		Font := FontName
 		Gdip_TextToGraphics(GB, " " . text, Options, Font, DstWidth, DstHeight)
 	}
 	hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
@@ -1085,7 +1120,7 @@ pBrush := Gdip_BrushCreateSolid(ACCENT_COLOR)
 Gdip_FillRectangle(GB, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold cffffffff"
-Font := "SF Pro Display"
+Font := FontName
 Gdip_TextToGraphics(GB, displayTitle, Options, Font, DstWidth-Bord, 30)
 hBitmapB := Gdip_CreateHBITMAPFromBitmap(pBitmapB)
 
@@ -1102,7 +1137,7 @@ pBrush := Gdip_BrushCreateSolid(0xff333333)
 Gdip_FillRectangle(G, pBrush, 0, 0, DstWidth+Bord, 32)
 Gdip_DeleteBrush(pBrush)
 Options := "x0 y5 h30 w" . (DstWidth-Bord) . " s20 Center Bold c99ffffff"
-Font := "SF Pro Display"
+Font := FontName
 Gdip_TextToGraphics(G, displayTitle, Options, Font, DstWidth-Bord, 30)
 
 hBitmap := Gdip_CreateHBITMAPFromBitmap(pBitmapW)
